@@ -1,0 +1,2 @@
+[workspace]
+networks = { robinhood-testnet = { endpoint = "https://rpc.testnet.chain.robinhood.com" } }

@@ -2,5 +2,5 @@
 
 #[cfg(feature = "export-abi")]
 fn main() {
-    stylus_rosa::print_abi();
+    stylus_sdk::abi::export::print_from_args::<stylus_rosa::RosaPool>();
 }

@@ -1,18 +1,10 @@
 #![cfg_attr(not(feature = "export-abi"), no_std)]
 extern crate alloc;
 
+use alloc::vec;
 use alloc::vec::Vec;
 use alloy_primitives::{Address, U256, U64, U16};
-use stylus_sdk::{
-    block,
-    contract,
-    msg,
-    prelude::*,
-};
-
-#[cfg(target_arch = "wasm32")]
-#[global_allocator]
-static ALLOC: mini_alloc::MiniAlloc = mini_alloc::MiniAlloc::INIT;
+use stylus_sdk::prelude::*;
 
 sol_interface! {
     interface IERC20 {
@@ -72,7 +64,7 @@ impl From<RosaError> for Vec<u8> {
     }
 }
 
-#[external]
+#[public]
 impl RosaPool {
     pub fn get_circle_count(&self) -> Result<U256, Vec<u8>> {
         Ok(self.circle_count.get())
@@ -84,6 +76,7 @@ impl RosaPool {
         contribution_amount: U256,
         rotation_period: U256,
     ) -> Result<U256, Vec<u8>> {
+        let current_time = self.vm().block_timestamp();
         let current_count = self.circle_count.get();
         let next_id = current_count + U256::from(1);
         self.circle_count.set(next_id);
@@ -94,7 +87,7 @@ impl RosaPool {
         
         let period_u64 = rotation_period.to::<u64>();
         new_circle.rotation_period.set(U64::from(period_u64));
-        new_circle.last_rotation_timestamp.set(U64::from(block::timestamp()));
+        new_circle.last_rotation_timestamp.set(U64::from(current_time));
         new_circle.current_round.set(U16::from(1));
         new_circle.member_count.set(U16::from(0));
         new_circle.active_payout_index.set(U16::from(0));
@@ -104,12 +97,12 @@ impl RosaPool {
     }
 
     pub fn join_circle(&mut self, circle_id: U256) -> Result<(), Vec<u8>> {
+        let sender = self.vm().msg_sender();
         let mut circle = self.circles.setter(circle_id);
         if !circle.is_active.get() {
             return Err(RosaError::CircleDoesNotExist.into());
         }
 
-        let sender = msg::sender();
         let mut circle_info_map = self.circle_member_info.setter(circle_id);
         let mut member_info = circle_info_map.setter(sender);
         
@@ -148,7 +141,7 @@ impl RosaPool {
             )
         };
 
-        let current_time = block::timestamp();
+        let current_time = self.vm().block_timestamp();
 
         if current_time < last_time + period {
             return Err(RosaError::RotationTooEarly.into());
@@ -174,7 +167,9 @@ impl RosaPool {
             };
 
             if is_member {
-                match token.transfer_from(&mut *self, member_addr, contract::address(), contribution) {
+                let contract_addr = self.vm().contract_address();
+                let config = Call::new_mutating(self);
+                match token.transfer_from(self.vm(), config, member_addr, contract_addr, contribution) {
                     Ok(success) => {
                         if success {
                             total_pot += contribution;
@@ -244,14 +239,17 @@ impl RosaPool {
             recipient_info.has_received_pot.set(true);
         }
 
-        match token.transfer(&mut *self, recipient_addr, total_pot) {
-            Ok(success) => {
-                if !success {
+        {
+            let config = Call::new_mutating(self);
+            match token.transfer(self.vm(), config, recipient_addr, total_pot) {
+                Ok(success) => {
+                    if !success {
+                        return Err(RosaError::TransferFailed.into());
+                    }
+                }
+                Err(_) => {
                     return Err(RosaError::TransferFailed.into());
                 }
-            }
-            Err(_) => {
-                return Err(RosaError::TransferFailed.into());
             }
         }
 
