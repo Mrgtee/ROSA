@@ -25,7 +25,8 @@ import {
   ERC20_ABI, 
   ROSA_CONTRACT_ADDRESS, 
   MOCK_USDC_ADDRESS, 
-  robinhoodChain, 
+  OFFICIAL_USDC_ADDRESS,
+  arbitrumSepolia, 
   publicClient, 
   fetchOnChainCircles, 
   OnChainCircle 
@@ -49,7 +50,9 @@ export default function Dashboard() {
   const [newCircleName, setNewCircleName] = useState("");
   const [newContribution, setNewContribution] = useState(10);
   const [newPeriod, setNewPeriod] = useState("60"); // default 1 Min for demo
+  const [selectedTokenAddress, setSelectedTokenAddress] = useState<string>("0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d"); // default official USDC
   const [joinInviteCode, setJoinInviteCode] = useState("");
+  const [userEmail, setUserEmail] = useState<string>("");
 
   // UI state
   const [simulationLog, setSimulationLog] = useState<string[]>([]);
@@ -81,6 +84,10 @@ export default function Dashboard() {
     setPrivateKey(storedKey);
     const account = privateKeyToAccount(storedKey as Address);
     setUserAddress(account.address);
+    const emailVal = localStorage.getItem("rosa_user_email");
+    if (emailVal) {
+      setUserEmail(emailVal);
+    }
     logSim(`Smart account loaded: ${account.address}`);
   }, []);
 
@@ -172,11 +179,11 @@ export default function Dashboard() {
       const account = privateKeyToAccount(privateKey as Address);
       const walletClient = createWalletClient({
         account,
-        chain: robinhoodChain,
+        chain: arbitrumSepolia,
         transport: http(),
       });
 
-      // 1. Fetch circle details to get contribution amount
+      // 1. Fetch circle details to get contribution amount and token address
       const details = await publicClient.readContract({
         address: ROSA_CONTRACT_ADDRESS,
         abi: ROSA_ABI,
@@ -184,12 +191,13 @@ export default function Dashboard() {
         args: [circleIdVal],
       });
 
+      const tokenAddress = details[0];
       const contributionAmount = details[1];
 
-      // 2. Approve mock USDC to RosaPool contract
-      logSim("Step 1/2: Submitting mUSDC spend approval transaction...");
+      // 2. Approve USDC to RosaPool contract
+      logSim("Step 1/2: Submitting spend approval transaction...");
       const approveHash = await walletClient.writeContract({
-        address: MOCK_USDC_ADDRESS,
+        address: tokenAddress,
         abi: ERC20_ABI,
         functionName: "approve",
         args: [ROSA_CONTRACT_ADDRESS, contributionAmount],
@@ -232,7 +240,7 @@ export default function Dashboard() {
       const account = privateKeyToAccount(privateKey as Address);
       const walletClient = createWalletClient({
         account,
-        chain: robinhoodChain,
+        chain: arbitrumSepolia,
         transport: http(),
       });
 
@@ -245,7 +253,7 @@ export default function Dashboard() {
         address: ROSA_CONTRACT_ADDRESS,
         abi: ROSA_ABI,
         functionName: "createCircle",
-        args: [MOCK_USDC_ADDRESS, contributionDecimals, periodSeconds],
+        args: [selectedTokenAddress as Address, contributionDecimals, periodSeconds],
       });
       logSim(`Create Circle TX sent: ${createHash.slice(0, 10)}... waiting confirmation`);
       
@@ -274,7 +282,7 @@ export default function Dashboard() {
       const account = privateKeyToAccount(privateKey as Address);
       const walletClient = createWalletClient({
         account,
-        chain: robinhoodChain,
+        chain: arbitrumSepolia,
         transport: http(),
       });
 
@@ -324,6 +332,11 @@ export default function Dashboard() {
           </div>
 
           <div className="flex items-center space-x-4">
+            {userEmail && (
+              <span className="hidden md:inline-block text-xs font-semibold text-violet-400 border border-violet-500/20 px-3 py-1.5 rounded-xl bg-violet-500/5">
+                {userEmail}
+              </span>
+            )}
             <div className="hidden sm:flex items-center space-x-2 border border-white/5 px-3 py-1.5 rounded-xl bg-white/5">
               <Wallet className="h-4 w-4 text-emerald-400" />
               <span className="text-xs font-mono text-slate-300">
@@ -586,6 +599,28 @@ export default function Dashboard() {
                   placeholder="e.g., London Devs Circle"
                   className="w-full h-11 px-4 rounded-xl bg-white/5 border border-white/5 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-violet-500/50"
                 />
+              </div>
+
+              <div>
+                <div className="flex justify-between items-center mb-1.5">
+                  <label className="text-[10px] text-slate-400 uppercase tracking-wider block">USDC Token Version</label>
+                  <a 
+                    href="https://faucet.circle.com/" 
+                    target="_blank" 
+                    rel="noreferrer" 
+                    className="text-[9px] text-violet-400 hover:underline"
+                  >
+                    Circle Faucet
+                  </a>
+                </div>
+                <select
+                  value={selectedTokenAddress}
+                  onChange={(e) => setSelectedTokenAddress(e.target.value)}
+                  className="w-full h-11 px-3 rounded-xl bg-[#090D16] border border-white/5 text-white text-sm focus:outline-none focus:border-violet-500/50"
+                >
+                  <option value={OFFICIAL_USDC_ADDRESS}>Circle Test USDC (Official Sepolia)</option>
+                  <option value={MOCK_USDC_ADDRESS}>ROSA mUSDC (Instant Faucet)</option>
+                </select>
               </div>
 
               <div className="grid grid-cols-2 gap-4">

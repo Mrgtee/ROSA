@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createPublicClient, createWalletClient, http, parseEther, Address } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import contractAddresses from "../../../lib/contractAddresses.json";
-import { ERC20_ABI, robinhoodChain } from "../../../lib/rosa";
+import { ERC20_ABI, arbitrumSepolia } from "../../../lib/rosa";
 
 const MOCK_USDC_ADDRESS = contractAddresses.mockUsdc as Address;
 
@@ -24,22 +24,22 @@ export async function POST(request: Request) {
     const account = privateKeyToAccount(formattedPK);
 
     const publicClient = createPublicClient({
-      chain: robinhoodChain,
+      chain: arbitrumSepolia,
       transport: http(),
     });
 
     const walletClient = createWalletClient({
       account,
-      chain: robinhoodChain,
+      chain: arbitrumSepolia,
       transport: http(),
     });
 
     console.log(`Faucet funding request for ${address} from faucet ${account.address}`);
 
-    // Send 0.001 ETH to the user for gas
+    // Send 0.0002 ETH to the user for gas
     const ethTxHash = await walletClient.sendTransaction({
       to: address as Address,
-      value: parseEther("0.001"),
+      value: parseEther("0.0002"),
     });
     console.log(`Sent ETH gas tx: ${ethTxHash}`);
 
@@ -60,7 +60,7 @@ export async function POST(request: Request) {
       success: true,
       ethTxHash,
       usdcTxHash,
-      message: "Successfully funded with 0.001 ETH and 1,000 mUSDC"
+      message: "Successfully funded with 0.0002 ETH and 1,000 mUSDC"
     });
   } catch (error: any) {
     console.error("Faucet error:", error);

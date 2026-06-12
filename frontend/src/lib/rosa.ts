@@ -27,21 +27,22 @@ export const ERC20_ABI = parseAbi([
 
 export const ROSA_CONTRACT_ADDRESS = contractAddresses.rosaPool as Address;
 export const MOCK_USDC_ADDRESS = contractAddresses.mockUsdc as Address;
+export const OFFICIAL_USDC_ADDRESS = "0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d" as Address;
 
-const ROBINHOOD_TESTNET_RPC = "https://rpc.testnet.chain.robinhood.com";
+const ARBITRUM_SEPOLIA_RPC = "https://sepolia-rollup.arbitrum.io/rpc";
 
-export const robinhoodChain = {
-  id: 46630,
-  name: "Robinhood Chain Testnet",
+export const arbitrumSepolia = {
+  id: 421614,
+  name: "Arbitrum Sepolia",
   nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
   rpcUrls: {
-    default: { http: [ROBINHOOD_TESTNET_RPC] },
-    public: { http: [ROBINHOOD_TESTNET_RPC] },
+    default: { http: [ARBITRUM_SEPOLIA_RPC] },
+    public: { http: [ARBITRUM_SEPOLIA_RPC] },
   },
 };
 
 export const publicClient = createPublicClient({
-  chain: robinhoodChain,
+  chain: arbitrumSepolia,
   transport: http(),
 });
 
@@ -140,9 +141,13 @@ export async function fetchOnChainCircles(userAddress: string): Promise<OnChainC
         // Determine invite code format: e.g. ROSA-1
         const inviteCode = `ROSA-${i}`;
 
-        // Get token symbol (if mockUsdc, otherwise fetch symbol)
+        // Get token symbol (if mockUsdc/officialUsdc, otherwise fetch symbol)
         let tokenSymbol = "USDC";
-        if (tokenAddress.toLowerCase() !== MOCK_USDC_ADDRESS.toLowerCase()) {
+        if (tokenAddress.toLowerCase() === MOCK_USDC_ADDRESS.toLowerCase()) {
+          tokenSymbol = "mUSDC";
+        } else if (tokenAddress.toLowerCase() === OFFICIAL_USDC_ADDRESS.toLowerCase()) {
+          tokenSymbol = "USDC";
+        } else {
           try {
             tokenSymbol = await publicClient.readContract({
               address: tokenAddress,
@@ -152,8 +157,6 @@ export async function fetchOnChainCircles(userAddress: string): Promise<OnChainC
           } catch (e) {
             tokenSymbol = "TOKEN";
           }
-        } else {
-          tokenSymbol = "mUSDC";
         }
 
         const periodSeconds = Number(rotationPeriod);
