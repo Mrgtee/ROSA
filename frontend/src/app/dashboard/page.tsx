@@ -25,11 +25,8 @@ import Link from "next/link";
 import { 
   ROSA_ABI, 
   ERC20_ABI, 
-  ROSA_CONTRACT_ADDRESS, 
-  MOCK_USDC_ADDRESS, 
-  OFFICIAL_USDC_ADDRESS,
-  arbitrumSepolia, 
-  publicClient, 
+  getNetworkConfig,
+  getPublicClient,
   fetchOnChainCircles, 
   OnChainCircle 
 } from "../../lib/rosa";
@@ -37,11 +34,12 @@ import { createWalletClient, http, parseUnits, formatUnits, Address } from "viem
 import { privateKeyToAccount } from "viem/accounts";
 
 export default function Dashboard() {
-  // Wallet state
+  // Network and Wallet state
+  const [selectedChainId, setSelectedChainId] = useState<number>(46630); // Default to Robinhood Chain Testnet
   const [privateKey, setPrivateKey] = useState<string>("");
   const [userAddress, setUserAddress] = useState<string>("");
   const [ethBalance, setEthBalance] = useState<string>("0.00");
-  const [usdcBalance, setUsdcBalance] = useState<string>("0.00");
+  const [tokenBalance, setTokenBalance] = useState<string>("0.00");
 
   // On-chain circles state
   const [circles, setCircles] = useState<OnChainCircle[]>([]);
@@ -52,7 +50,7 @@ export default function Dashboard() {
   const [newCircleName, setNewCircleName] = useState("");
   const [newContribution, setNewContribution] = useState(10);
   const [newPeriod, setNewPeriod] = useState("60"); // default 1 Min for demo
-  const [selectedTokenAddress, setSelectedTokenAddress] = useState<string>("0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d"); // default official USDC
+  const [customTokenAddress, setCustomTokenAddress] = useState("");
   const [joinInviteCode, setJoinInviteCode] = useState("");
   const [userEmail, setUserEmail] = useState<string>("");
 
@@ -64,18 +62,19 @@ export default function Dashboard() {
   const [isRotating, setIsRotating] = useState<boolean>(false);
   const [copiedAddress, setCopiedAddress] = useState<boolean>(false);
 
-  // Active Circle computed property
+  // Get active network config
+  const network = getNetworkConfig(selectedChainId);
   const activeCircle = circles.find(c => c.id === selectedCircleId) || circles[0];
+
+  const logSim = (msg: string) => {
+    setSimulationLog(prev => [`[${new Date().toLocaleTimeString()}] ${msg}`, ...prev].slice(0, 15));
+  };
 
   const handleCopyAddress = () => {
     if (!userAddress) return;
     navigator.clipboard.writeText(userAddress);
     setCopiedAddress(true);
     setTimeout(() => setCopiedAddress(false), 2000);
-  };
-
-  const logSim = (msg: string) => {
-    setSimulationLog(prev => [`[${new Date().toLocaleTimeString()}] ${msg}`, ...prev].slice(0, 15));
   };
 
   // Initialize client-side wallet
@@ -101,31 +100,45 @@ export default function Dashboard() {
     logSim(`Smart account loaded: ${account.address}`);
   }, []);
 
+  // Sync default form token address when chain changes
+  useEffect(() => {
+    setCustomTokenAddress(network.tokenAddress);
+  }, [selectedChainId]);
+
   // Fetch balances and circles
   const refreshOnChainData = async () => {
     if (!userAddress) return;
     setLoadingCircles(true);
     try {
-      // Fetch ETH gas balance
-      const ethVal = await publicClient.getBalance({ address: userAddress as Address });
+      const client = getPublicClient(selectedChainId);
+
+      // Fetch native ETH gas balance
+      const ethVal = await client.getBalance({ address: userAddress as Address });
       setEthBalance(parseFloat(formatUnits(ethVal, 18)).toFixed(4));
 
-      // Fetch mUSDC balance
-      const usdcVal = await publicClient.readContract({
-        address: MOCK_USDC_ADDRESS,
-        abi: ERC20_ABI,
-        functionName: "balanceOf",
-        args: [userAddress as Address],
-      });
-      setUsdcBalance(parseFloat(formatUnits(usdcVal, 6)).toFixed(2));
+      // Fetch stablecoin token balance (USDG / USDC)
+      try {
+        const tokenVal = await client.readContract({
+          address: network.tokenAddress,
+          abi: ERC20_ABI,
+          functionName: "balanceOf",
+          args: [userAddress as Address],
+        });
+        setTokenBalance(parseFloat(formatUnits(tokenVal, 6)).toFixed(2));
+      } catch (tokenErr) {
+        console.error("Token balance fetch error:", tokenErr);
+        setTokenBalance("0.00");
+      }
 
-      // Fetch ROSA circles
-      const onChainCircles = await fetchOnChainCircles(userAddress);
+      // Fetch ROSA circles for this chain
+      const onChainCircles = await fetchOnChainCircles(selectedChainId, userAddress);
       setCircles(onChainCircles);
       
       // Auto-select first circle if none selected
-      if (onChainCircles.length > 0 && !selectedCircleId) {
+      if (onChainCircles.length > 0) {
         setSelectedCircleId(onChainCircles[0].id);
+      } else {
+        setSelectedCircleId("");
       }
     } catch (err: any) {
       console.error("Failed to load on-chain data:", err);
@@ -139,22 +152,22 @@ export default function Dashboard() {
     if (userAddress) {
       refreshOnChainData();
     }
-  }, [userAddress]);
+  }, [userAddress, selectedChainId]);
 
-  // Request faucet funds
+  // Request faucet funds (Sends gas ETH on the selected network)
   const handleFaucetRequest = async () => {
     if (!userAddress) return;
     setIsFunding(true);
-    logSim("Requesting testnet ETH gas and mock USDC from faucet API...");
+    logSim(`Requesting testnet gas ETH on ${network.chain.name} from faucet API...`);
     try {
       const res = await fetch("/api/fund", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ address: userAddress }),
+        body: JSON.stringify({ address: userAddress, chainId: selectedChainId }),
       });
       const data = await res.json();
       if (data.success) {
-        logSim("Faucet funding confirmed! Received 0.001 ETH and 1,000 mUSDC.");
+        logSim(`Gas funding confirmed! Gas received on ${network.chain.name}.`);
         await refreshOnChainData();
       } else {
         logSim(`Faucet request failed: ${data.error}`);
@@ -175,7 +188,6 @@ export default function Dashboard() {
     const code = joinInviteCode.trim().toUpperCase();
     logSim(`Attempting to join circle with code: ${code}...`);
 
-    // Parse circle ID from code (e.g. ROSA-3 -> ID 3)
     const match = code.match(/ROSA-(\d+)/);
     if (!match) {
       logSim("Invalid invite code. Must be in the format: ROSA-[ID] (e.g. ROSA-1)");
@@ -186,16 +198,17 @@ export default function Dashboard() {
     const circleIdVal = BigInt(match[1]);
 
     try {
+      const client = getPublicClient(selectedChainId);
       const account = privateKeyToAccount(privateKey as Address);
       const walletClient = createWalletClient({
         account,
-        chain: arbitrumSepolia,
+        chain: network.chain,
         transport: http(),
       });
 
       // 1. Fetch circle details to get contribution amount and token address
-      const details = await publicClient.readContract({
-        address: ROSA_CONTRACT_ADDRESS,
+      const details = await client.readContract({
+        address: network.poolAddress,
         abi: ROSA_ABI,
         functionName: "getCircleDetails",
         args: [circleIdVal],
@@ -204,27 +217,27 @@ export default function Dashboard() {
       const tokenAddress = details[0];
       const contributionAmount = details[1];
 
-      // 2. Approve USDC to RosaPool contract
-      logSim("Step 1/2: Submitting spend approval transaction...");
+      // 2. Approve stablecoin spend to ROSA Pool contract
+      logSim(`Step 1/2: Submitting spend approval transaction...`);
       const approveHash = await walletClient.writeContract({
         address: tokenAddress,
         abi: ERC20_ABI,
         functionName: "approve",
-        args: [ROSA_CONTRACT_ADDRESS, contributionAmount],
+        args: [network.poolAddress, contributionAmount],
       });
       logSim(`Approval TX sent: ${approveHash.slice(0, 10)}... waiting confirmation`);
-      await publicClient.waitForTransactionReceipt({ hash: approveHash });
+      await client.waitForTransactionReceipt({ hash: approveHash });
 
       // 3. Call joinCircle
       logSim("Step 2/2: Submitting join circle transaction to Stylus contract...");
       const joinHash = await walletClient.writeContract({
-        address: ROSA_CONTRACT_ADDRESS,
+        address: network.poolAddress,
         abi: ROSA_ABI,
         functionName: "joinCircle",
         args: [circleIdVal],
       });
       logSim(`Join TX sent: ${joinHash.slice(0, 10)}... waiting confirmation`);
-      await publicClient.waitForTransactionReceipt({ hash: joinHash });
+      await client.waitForTransactionReceipt({ hash: joinHash });
 
       logSim(`Successfully joined Circle #${circleIdVal.toString()}!`);
       setJoinInviteCode("");
@@ -247,30 +260,31 @@ export default function Dashboard() {
     logSim(`Deploying new ROSA Circle: ${newCircleName}...`);
 
     try {
+      const client = getPublicClient(selectedChainId);
       const account = privateKeyToAccount(privateKey as Address);
       const walletClient = createWalletClient({
         account,
-        chain: arbitrumSepolia,
+        chain: network.chain,
         transport: http(),
       });
 
-      const contributionDecimals = parseUnits(newContribution.toString(), 6); // USDC uses 6 decimals
+      const contributionDecimals = parseUnits(newContribution.toString(), 6); // standard 6 decimals for USDC/USDG
       const periodSeconds = BigInt(newPeriod);
+      const tokenToUse = (customTokenAddress.trim() || network.tokenAddress) as Address;
 
       // Call createCircle
       logSim("Submitting createCircle transaction to Stylus contract...");
       const createHash = await walletClient.writeContract({
-        address: ROSA_CONTRACT_ADDRESS,
+        address: network.poolAddress,
         abi: ROSA_ABI,
         functionName: "createCircle",
-        args: [selectedTokenAddress as Address, contributionDecimals, periodSeconds],
+        args: [tokenToUse, contributionDecimals, periodSeconds],
       });
       logSim(`Create Circle TX sent: ${createHash.slice(0, 10)}... waiting confirmation`);
       
-      const receipt = await publicClient.waitForTransactionReceipt({ hash: createHash });
+      await client.waitForTransactionReceipt({ hash: createHash });
       logSim("Stylus contract processed Circle creation!");
 
-      // Refresh list to find the new circle ID
       await refreshOnChainData();
       setNewCircleName("");
     } catch (err: any) {
@@ -281,7 +295,7 @@ export default function Dashboard() {
     }
   };
 
-  // 3. Simulate Monthly/Periodic Rotation (Trigger Rotation)
+  // 3. Simulate Periodic Rotation (Trigger Rotation)
   const handleTriggerRotation = async () => {
     if (!activeCircle || !userAddress) return;
 
@@ -289,10 +303,11 @@ export default function Dashboard() {
     logSim(`Triggering rotation check for Circle #${activeCircle.id}...`);
 
     try {
+      const client = getPublicClient(selectedChainId);
       const account = privateKeyToAccount(privateKey as Address);
       const walletClient = createWalletClient({
         account,
-        chain: arbitrumSepolia,
+        chain: network.chain,
         transport: http(),
       });
 
@@ -300,13 +315,13 @@ export default function Dashboard() {
 
       logSim("Submitting triggerRotation transaction to Stylus contract...");
       const rotHash = await walletClient.writeContract({
-        address: ROSA_CONTRACT_ADDRESS,
+        address: network.poolAddress,
         abi: ROSA_ABI,
         functionName: "triggerRotation",
         args: [circleIdVal],
       });
       logSim(`Rotation TX sent: ${rotHash.slice(0, 10)}... waiting confirmation`);
-      await publicClient.waitForTransactionReceipt({ hash: rotHash });
+      await client.waitForTransactionReceipt({ hash: rotHash });
 
       logSim(`On-chain rotation succeeded! Pot disbursed to the next recipient.`);
       await refreshOnChainData();
@@ -318,7 +333,6 @@ export default function Dashboard() {
     }
   };
 
-  // Calculate stats
   const totalLocked = circles.reduce((sum, c) => sum + c.totalPot, 0);
   const totalYield = circles.reduce((sum, c) => sum + c.yieldEarned, 0);
 
@@ -342,6 +356,20 @@ export default function Dashboard() {
           </div>
 
           <div className="flex items-center space-x-4">
+            {/* Network Selector */}
+            <select
+              value={selectedChainId}
+              onChange={(e) => {
+                setSelectedChainId(Number(e.target.value));
+                setCircles([]);
+                setSelectedCircleId("");
+              }}
+              className="h-9 px-3 rounded-xl bg-[#111827]/80 border border-white/10 text-xs font-semibold text-slate-200 focus:outline-none focus:border-violet-500/50"
+            >
+              <option value={46630}>Robinhood Chain Testnet</option>
+              <option value={421614}>Arbitrum Sepolia</option>
+            </select>
+
             {userEmail && (
               <span className="hidden md:inline-block text-xs font-semibold text-violet-400 border border-violet-500/20 px-3 py-1.5 rounded-xl bg-violet-500/5">
                 {userEmail}
@@ -389,28 +417,62 @@ export default function Dashboard() {
               <span className="text-white font-mono font-semibold">{ethBalance} ETH</span>
             </div>
             <div className="flex items-center space-x-2">
-              <span className="text-slate-400">Mock USDC:</span>
-              <span className="text-emerald-400 font-mono font-semibold">{usdcBalance} mUSDC</span>
+              <span className="text-slate-400">{network.tokenSymbol} Balance:</span>
+              <span className="text-emerald-400 font-mono font-semibold">{tokenBalance} {network.tokenSymbol}</span>
             </div>
           </div>
 
-          <button
-            onClick={handleFaucetRequest}
-            disabled={isFunding}
-            className="w-full md:w-auto px-4 py-1.5 bg-violet-600/20 hover:bg-violet-600/30 text-violet-300 border border-violet-500/30 hover:border-violet-500/50 rounded-xl text-xs font-semibold flex items-center justify-center space-x-1.5 transition"
-          >
-            {isFunding ? (
+          <div className="flex items-center space-x-3">
+            {selectedChainId === 46630 ? (
               <>
-                <div className="h-3 w-3 border-2 border-violet-400/20 border-t-violet-400 rounded-full animate-spin" />
-                <span>Funding...</span>
+                <a
+                  href="https://faucet.testnet.chain.robinhood.com"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-3 py-1.5 bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 rounded-xl text-xs font-semibold transition"
+                  title="Official Robinhood Faucet (ETH + Stock Tokens)"
+                >
+                  Robinhood Faucet
+                </a>
+                <a
+                  href="https://www.paxos.com/testnet-faucet/"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-3 py-1.5 bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 rounded-xl text-xs font-semibold transition"
+                  title="Paxos USDG Faucet (100 USDG per request)"
+                >
+                  Paxos USDG Faucet
+                </a>
               </>
             ) : (
-              <>
-                <DollarSign className="h-3.5 w-3.5" />
-                <span>Claim Gas & mUSDC Faucet</span>
-              </>
+              <a
+                href="https://faucet.circle.com"
+                target="_blank"
+                rel="noreferrer"
+                className="px-3 py-1.5 bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 rounded-xl text-xs font-semibold transition"
+                title="Circle USDC Faucet"
+              >
+                Circle USDC Faucet
+              </a>
             )}
-          </button>
+            <button
+              onClick={handleFaucetRequest}
+              disabled={isFunding}
+              className="px-4 py-1.5 bg-violet-600/20 hover:bg-violet-600/30 text-violet-300 border border-violet-500/30 hover:border-violet-500/50 rounded-xl text-xs font-semibold flex items-center justify-center space-x-1.5 transition"
+            >
+              {isFunding ? (
+                <>
+                  <div className="h-3 w-3 border-2 border-violet-400/20 border-t-violet-400 rounded-full animate-spin" />
+                  <span>Funding...</span>
+                </>
+              ) : (
+                <>
+                  <DollarSign className="h-3.5 w-3.5" />
+                  <span>Claim Gas Faucet</span>
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -424,13 +486,13 @@ export default function Dashboard() {
           <div className="grid sm:grid-cols-3 gap-6">
             <div className="p-6 rounded-2xl bg-white/5 border border-white/5">
               <span className="text-xs text-slate-400 block mb-1">Active Savings Capital</span>
-              <span className="text-2xl font-bold text-white">{totalLocked} USDC</span>
+              <span className="text-2xl font-bold text-white">{totalLocked} {network.tokenSymbol}</span>
             </div>
             <div className="p-6 rounded-2xl bg-white/5 border border-white/5">
               <span className="text-xs text-slate-400 block mb-1">Total Yield Generated</span>
               <span className="text-2xl font-bold text-emerald-400 flex items-center">
                 <TrendingUp className="h-4 w-4 mr-1.5" />
-                +{totalYield.toFixed(2)} USDC
+                +{totalYield.toFixed(2)} {network.tokenSymbol}
               </span>
             </div>
             <div className="p-6 rounded-2xl bg-white/5 border border-white/5">
@@ -448,11 +510,11 @@ export default function Dashboard() {
             {loadingCircles && circles.length === 0 ? (
               <div className="flex flex-col items-center justify-center p-12 border border-white/5 rounded-2xl bg-[#111827]/10">
                 <div className="h-8 w-8 border-2 border-violet-500/20 border-t-violet-500 rounded-full animate-spin mb-4" />
-                <span className="text-sm text-slate-400">Querying Robinhood Chain Stylus state...</span>
+                <span className="text-sm text-slate-400">Querying smart contract state on {network.chain.name}...</span>
               </div>
             ) : circles.length === 0 ? (
               <div className="p-8 border border-dashed border-white/10 rounded-2xl bg-[#111827]/10 text-center">
-                <span className="text-sm text-slate-400 block mb-3">No active savings circles found.</span>
+                <span className="text-sm text-slate-400 block mb-3">No active savings circles found on this network.</span>
                 <span className="text-xs text-slate-500">Deploy a new circle or join one using an invite code.</span>
               </div>
             ) : (
@@ -621,30 +683,22 @@ export default function Dashboard() {
               </div>
 
               <div>
-                <div className="flex justify-between items-center mb-1.5">
-                  <label className="text-[10px] text-slate-400 uppercase tracking-wider block">USDC Token Version</label>
-                  <a 
-                    href="https://faucet.circle.com/" 
-                    target="_blank" 
-                    rel="noreferrer" 
-                    className="text-[9px] text-violet-400 hover:underline"
-                  >
-                    Circle Faucet
-                  </a>
-                </div>
-                <select
-                  value={selectedTokenAddress}
-                  onChange={(e) => setSelectedTokenAddress(e.target.value)}
-                  className="w-full h-11 px-3 rounded-xl bg-[#090D16] border border-white/5 text-white text-sm focus:outline-none focus:border-violet-500/50"
-                >
-                  <option value={OFFICIAL_USDC_ADDRESS}>Circle Test USDC (Official Sepolia)</option>
-                  <option value={MOCK_USDC_ADDRESS}>ROSA mUSDC (Instant Faucet)</option>
-                </select>
+                <label className="text-[10px] text-slate-400 uppercase tracking-wider block mb-1.5">Stablecoin Token Address</label>
+                <input
+                  type="text"
+                  value={customTokenAddress}
+                  onChange={(e) => setCustomTokenAddress(e.target.value)}
+                  placeholder="0x..."
+                  className="w-full h-11 px-4 rounded-xl bg-white/5 border border-white/5 text-white placeholder-slate-500 text-xs focus:outline-none focus:border-violet-500/50 font-mono"
+                />
+                <span className="text-[9px] text-slate-500 mt-1 block">
+                  Defaults to {network.tokenName} on this network.
+                </span>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[10px] text-slate-400 uppercase tracking-wider block mb-1.5">Contribution (mUSDC)</label>
+                  <label className="text-[10px] text-slate-400 uppercase tracking-wider block mb-1.5">Contribution</label>
                   <input
                     type="number"
                     value={newContribution}

@@ -183,7 +183,7 @@ export default function Home() {
                 ROSA
               </span>
               <span className="ml-2 px-2 py-0.5 text-[10px] font-semibold text-emerald-400 bg-emerald-400/10 rounded-full border border-emerald-400/20">
-                Arbitrum Sepolia
+                Robinhood & Arbitrum Support
               </span>
             </div>
           </div>

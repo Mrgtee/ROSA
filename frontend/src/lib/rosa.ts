@@ -1,5 +1,4 @@
 import { createPublicClient, http, parseAbi, Address } from "viem";
-import contractAddresses from "./contractAddresses.json";
 
 export const ROSA_ABI = parseAbi([
   "function getCircleCount() external view returns (uint256)",
@@ -16,35 +15,72 @@ export const ERC20_ABI = parseAbi([
   "function name() external view returns (string)",
   "function symbol() external view returns (string)",
   "function decimals() external view returns (uint8)",
-  "function totalSupply() external view returns (uint256)",
   "function balanceOf(address owner) external view returns (uint256)",
   "function allowance(address owner, address spender) external view returns (uint256)",
   "function approve(address spender, uint256 value) external returns (bool)",
   "function transfer(address to, uint256 value) external returns (bool)",
-  "function transferFrom(address from, address to, uint256 value) external returns (bool)",
-  "function mint(address to, uint256 value) external"
+  "function transferFrom(address from, address to, uint256 value) external returns (bool)"
 ]);
 
-export const ROSA_CONTRACT_ADDRESS = contractAddresses.rosaPool as Address;
-export const MOCK_USDC_ADDRESS = contractAddresses.mockUsdc as Address;
-export const OFFICIAL_USDC_ADDRESS = "0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d" as Address;
+// Deployed contract addresses on Robinhood Chain Testnet (Chain ID 46630)
+export const ROBINHOOD_POOL = "0x707fd662f3877be6ea408cebee3156ee7432efc2" as Address;
+export const ROBINHOOD_USDG = "0x7E955252E15c84f5768B83c41a71F9eba181802F" as Address;
 
-const ARBITRUM_SEPOLIA_RPC = "https://sepolia-rollup.arbitrum.io/rpc";
+// Deployed contract addresses on Arbitrum Sepolia (Chain ID 421614)
+export const SEPOLIA_POOL = "0x315f644ca5d477dcbb17ced6de90fd8f9e593d0b" as Address;
+export const SEPOLIA_USDC = "0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d" as Address;
+
+export const robinhoodChain = {
+  id: 46630,
+  name: "Robinhood Chain Testnet",
+  nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+  rpcUrls: {
+    default: { http: ["https://rpc.testnet.chain.robinhood.com"] },
+    public: { http: ["https://rpc.testnet.chain.robinhood.com"] },
+  },
+};
 
 export const arbitrumSepolia = {
   id: 421614,
   name: "Arbitrum Sepolia",
   nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
   rpcUrls: {
-    default: { http: [ARBITRUM_SEPOLIA_RPC] },
-    public: { http: [ARBITRUM_SEPOLIA_RPC] },
+    default: { http: ["https://sepolia-rollup.arbitrum.io/rpc"] },
+    public: { http: ["https://sepolia-rollup.arbitrum.io/rpc"] },
   },
 };
 
-export const publicClient = createPublicClient({
-  chain: arbitrumSepolia,
-  transport: http(),
-});
+export function getNetworkConfig(chainId: number) {
+  if (chainId === 46630) {
+    return {
+      chain: robinhoodChain,
+      poolAddress: ROBINHOOD_POOL,
+      tokenAddress: ROBINHOOD_USDG,
+      tokenSymbol: "USDG",
+      tokenName: "Paxos USDG",
+      explorerUrl: "https://explorer.testnet.chain.robinhood.com",
+      faucetUrl: "https://explorer.testnet.chain.robinhood.com"
+    };
+  } else {
+    return {
+      chain: arbitrumSepolia,
+      poolAddress: SEPOLIA_POOL,
+      tokenAddress: SEPOLIA_USDC,
+      tokenSymbol: "USDC",
+      tokenName: "Circle USDC",
+      explorerUrl: "https://sepolia.arbiscan.io",
+      faucetUrl: "https://faucet.circle.com"
+    };
+  }
+}
+
+export function getPublicClient(chainId: number) {
+  const config = getNetworkConfig(chainId);
+  return createPublicClient({
+    chain: config.chain,
+    transport: http(),
+  });
+}
 
 export interface OnChainMember {
   address: string;
@@ -70,11 +106,14 @@ export interface OnChainCircle {
   isActive: boolean;
 }
 
-// Fetch all circles and their details from the blockchain
-export async function fetchOnChainCircles(userAddress: string): Promise<OnChainCircle[]> {
+// Fetch all circles and their details from the blockchain dynamically based on Chain ID
+export async function fetchOnChainCircles(chainId: number, userAddress: string): Promise<OnChainCircle[]> {
   try {
-    const circleCountBig = await publicClient.readContract({
-      address: ROSA_CONTRACT_ADDRESS,
+    const config = getNetworkConfig(chainId);
+    const client = getPublicClient(chainId);
+
+    const circleCountBig = await client.readContract({
+      address: config.poolAddress,
       abi: ROSA_ABI,
       functionName: "getCircleCount",
     });
@@ -82,12 +121,11 @@ export async function fetchOnChainCircles(userAddress: string): Promise<OnChainC
     const circleCount = Number(circleCountBig);
     const circles: OnChainCircle[] = [];
 
-    // Loop through all circle IDs (1-indexed based on createCircle logic)
     for (let i = 1; i <= circleCount; i++) {
       try {
         const circleId = BigInt(i);
-        const details = await publicClient.readContract({
-          address: ROSA_CONTRACT_ADDRESS,
+        const details = await client.readContract({
+          address: config.poolAddress,
           abi: ROSA_ABI,
           functionName: "getCircleDetails",
           args: [circleId],
@@ -111,15 +149,15 @@ export async function fetchOnChainCircles(userAddress: string): Promise<OnChainC
         const count = Number(memberCount);
 
         for (let mIdx = 0; mIdx < count; mIdx++) {
-          const mAddr = await publicClient.readContract({
-            address: ROSA_CONTRACT_ADDRESS,
+          const mAddr = await client.readContract({
+            address: config.poolAddress,
             abi: ROSA_ABI,
             functionName: "getMemberAddress",
             args: [circleId, mIdx],
           });
 
-          const mInfo = await publicClient.readContract({
-            address: ROSA_CONTRACT_ADDRESS,
+          const mInfo = await client.readContract({
+            address: config.poolAddress,
             abi: ROSA_ABI,
             functionName: "getMemberInfo",
             args: [circleId, mAddr],
@@ -132,24 +170,19 @@ export async function fetchOnChainCircles(userAddress: string): Promise<OnChainC
               address: mAddr,
               hasReceived,
               missed: Number(missed),
-              yieldEarned: Number(yieldEarned) / 10**6, // assuming 6 decimals for yield token
+              yieldEarned: Number(yieldEarned) / 10**6, // assuming 6 decimals
               isCurrentUser: mAddr.toLowerCase() === userAddress.toLowerCase(),
             });
           }
         }
 
-        // Determine invite code format: e.g. ROSA-1
         const inviteCode = `ROSA-${i}`;
 
-        // Get token symbol (if mockUsdc/officialUsdc, otherwise fetch symbol)
-        let tokenSymbol = "USDC";
-        if (tokenAddress.toLowerCase() === MOCK_USDC_ADDRESS.toLowerCase()) {
-          tokenSymbol = "mUSDC";
-        } else if (tokenAddress.toLowerCase() === OFFICIAL_USDC_ADDRESS.toLowerCase()) {
-          tokenSymbol = "USDC";
-        } else {
+        // Get token symbol
+        let tokenSymbol = config.tokenSymbol;
+        if (tokenAddress.toLowerCase() !== config.tokenAddress.toLowerCase()) {
           try {
-            tokenSymbol = await publicClient.readContract({
+            tokenSymbol = await client.readContract({
               address: tokenAddress,
               abi: ERC20_ABI,
               functionName: "symbol",
