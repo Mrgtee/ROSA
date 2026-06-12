@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   Users, 
   TrendingUp, 
@@ -14,216 +14,293 @@ import {
   LogOut,
   Calendar,
   CheckCircle,
-  HelpCircle
+  HelpCircle,
+  ArrowRight,
+  RefreshCw,
+  DollarSign
 } from "lucide-react";
 import Link from "next/link";
-
-interface Member {
-  name: string;
-  address: string;
-  hasReceived: boolean;
-  missed: number;
-  isCurrentUser?: boolean;
-}
-
-interface Circle {
-  id: string;
-  name: string;
-  token: string;
-  contribution: number;
-  period: string;
-  round: number;
-  totalPot: number;
-  yieldEarned: number;
-  members: Member[];
-  activePayoutIndex: number;
-  inviteCode: string;
-}
-
-const INITIAL_CIRCLES: Circle[] = [
-  {
-    id: "1",
-    name: "London Hackers Pot",
-    token: "USDC",
-    contribution: 150,
-    period: "Monthly",
-    round: 1,
-    totalPot: 900,
-    yieldEarned: 12.45,
-    inviteCode: "LON-DEV-99",
-    activePayoutIndex: 0,
-    members: [
-      { name: "You (Smart Wallet)", address: "0x3f...a291", hasReceived: false, missed: 0, isCurrentUser: true },
-      { name: "Alice Smith", address: "0x8a...4b12", hasReceived: true, missed: 0 },
-      { name: "Bob Jones", address: "0xf2...9d31", hasReceived: false, missed: 0 },
-      { name: "Charlie Brown", address: "0x7c...1a22", hasReceived: false, missed: 1 },
-      { name: "David Miller", address: "0x5d...8e77", hasReceived: false, missed: 0 },
-      { name: "Emma Watson", address: "0x9e...6c19", hasReceived: false, missed: 0 }
-    ]
-  },
-  {
-    id: "2",
-    name: "Tanda Fam UK",
-    token: "USDC",
-    contribution: 50,
-    period: "Weekly",
-    round: 3,
-    totalPot: 200,
-    yieldEarned: 1.88,
-    inviteCode: "FAM-TANDA",
-    activePayoutIndex: 1,
-    members: [
-      { name: "You (Smart Wallet)", address: "0x3f...a291", hasReceived: true, missed: 0, isCurrentUser: true },
-      { name: "Sarah Connor", address: "0xab...32cd", hasReceived: true, missed: 0 },
-      { name: "John Connor", address: "0xde...65fg", hasReceived: false, missed: 0 },
-      { name: "T-800", address: "0x99...88hh", hasReceived: false, missed: 0 }
-    ]
-  }
-];
+import { 
+  ROSA_ABI, 
+  ERC20_ABI, 
+  ROSA_CONTRACT_ADDRESS, 
+  MOCK_USDC_ADDRESS, 
+  robinhoodChain, 
+  publicClient, 
+  fetchOnChainCircles, 
+  OnChainCircle 
+} from "../../lib/rosa";
+import { createWalletClient, http, parseUnits, formatUnits, Address } from "viem";
+import { privateKeyToAccount } from "viem/accounts";
 
 export default function Dashboard() {
-  const [circles, setCircles] = useState<Circle[]>(INITIAL_CIRCLES);
-  const [selectedCircleId, setSelectedCircleId] = useState<string>("1");
-  const [newCircleName, setNewCircleName] = useState("");
-  const [newContribution, setNewContribution] = useState(100);
-  const [newPeriod, setNewPeriod] = useState("Monthly");
-  const [joinInviteCode, setJoinInviteCode] = useState("");
-  const [simulationLog, setSimulationLog] = useState<string[]>([]);
+  // Wallet state
+  const [privateKey, setPrivateKey] = useState<string>("");
+  const [userAddress, setUserAddress] = useState<string>("");
+  const [ethBalance, setEthBalance] = useState<string>("0.00");
+  const [usdcBalance, setUsdcBalance] = useState<string>("0.00");
 
+  // On-chain circles state
+  const [circles, setCircles] = useState<OnChainCircle[]>([]);
+  const [selectedCircleId, setSelectedCircleId] = useState<string>("");
+  const [loadingCircles, setLoadingCircles] = useState<boolean>(true);
+
+  // Form states
+  const [newCircleName, setNewCircleName] = useState("");
+  const [newContribution, setNewContribution] = useState(10);
+  const [newPeriod, setNewPeriod] = useState("60"); // default 1 Min for demo
+  const [joinInviteCode, setJoinInviteCode] = useState("");
+
+  // UI state
+  const [simulationLog, setSimulationLog] = useState<string[]>([]);
+  const [isFunding, setIsFunding] = useState<boolean>(false);
+  const [isCreating, setIsCreating] = useState<boolean>(false);
+  const [isJoining, setIsJoining] = useState<boolean>(false);
+  const [isRotating, setIsRotating] = useState<boolean>(false);
+
+  // Active Circle computed property
   const activeCircle = circles.find(c => c.id === selectedCircleId) || circles[0];
 
-  // Helper to add simulation logs
   const logSim = (msg: string) => {
-    setSimulationLog(prev => [msg, ...prev].slice(0, 10));
+    setSimulationLog(prev => [`[${new Date().toLocaleTimeString()}] ${msg}`, ...prev].slice(0, 15));
   };
 
-  // 1. Join circle via invite code
-  const handleJoinCircle = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!joinInviteCode.trim()) return;
+  // Initialize client-side wallet
+  useEffect(() => {
+    if (typeof window === "undefined") return;
 
-    // Check if code matches an existing pattern or create a mock circle
-    const code = joinInviteCode.toUpperCase();
-    logSim(`Attempting to join circle with code: ${code}...`);
+    let storedKey = localStorage.getItem("rosa_demo_key");
+    if (!storedKey) {
+      // Generate standard random 32-byte private key
+      const randBytes = new Uint8Array(32);
+      window.crypto.getRandomValues(randBytes);
+      storedKey = "0x" + Array.from(randBytes).map(b => b.toString(16).padStart(2, "0")).join("");
+      localStorage.setItem("rosa_demo_key", storedKey);
+    }
     
-    // Add user as a member to a newly discovered circle or simulate
-    setTimeout(() => {
-      const newCircle: Circle = {
-        id: (circles.length + 1).toString(),
-        name: `Tanda Circle ${code}`,
-        token: "USDC",
-        contribution: 100,
-        period: "Monthly",
-        round: 1,
-        totalPot: 500,
-        yieldEarned: 0.00,
-        inviteCode: code,
-        activePayoutIndex: 0,
-        members: [
-          { name: "You (Smart Wallet)", address: "0x3f...a291", hasReceived: false, missed: 0, isCurrentUser: true },
-          { name: "Member 2", address: "0x11...22aa", hasReceived: false, missed: 0 },
-          { name: "Member 3", address: "0x33...44bb", hasReceived: false, missed: 0 },
-          { name: "Member 4", address: "0x55...66cc", hasReceived: false, missed: 0 },
-          { name: "Member 5", address: "0x77...88dd", hasReceived: false, missed: 0 }
-        ]
-      };
-      setCircles(prev => [...prev, newCircle]);
-      setSelectedCircleId(newCircle.id);
+    setPrivateKey(storedKey);
+    const account = privateKeyToAccount(storedKey as Address);
+    setUserAddress(account.address);
+    logSim(`Smart account loaded: ${account.address}`);
+  }, []);
+
+  // Fetch balances and circles
+  const refreshOnChainData = async () => {
+    if (!userAddress) return;
+    setLoadingCircles(true);
+    try {
+      // Fetch ETH gas balance
+      const ethVal = await publicClient.getBalance({ address: userAddress as Address });
+      setEthBalance(parseFloat(formatUnits(ethVal, 18)).toFixed(4));
+
+      // Fetch mUSDC balance
+      const usdcVal = await publicClient.readContract({
+        address: MOCK_USDC_ADDRESS,
+        abi: ERC20_ABI,
+        functionName: "balanceOf",
+        args: [userAddress as Address],
+      });
+      setUsdcBalance(parseFloat(formatUnits(usdcVal, 6)).toFixed(2));
+
+      // Fetch ROSA circles
+      const onChainCircles = await fetchOnChainCircles(userAddress);
+      setCircles(onChainCircles);
+      
+      // Auto-select first circle if none selected
+      if (onChainCircles.length > 0 && !selectedCircleId) {
+        setSelectedCircleId(onChainCircles[0].id);
+      }
+    } catch (err: any) {
+      console.error("Failed to load on-chain data:", err);
+      logSim(`Error refreshing blockchain data: ${err.message}`);
+    } finally {
+      setLoadingCircles(false);
+    }
+  };
+
+  useEffect(() => {
+    if (userAddress) {
+      refreshOnChainData();
+    }
+  }, [userAddress]);
+
+  // Request faucet funds
+  const handleFaucetRequest = async () => {
+    if (!userAddress) return;
+    setIsFunding(true);
+    logSim("Requesting testnet ETH gas and mock USDC from faucet API...");
+    try {
+      const res = await fetch("/api/fund", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ address: userAddress }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        logSim("Faucet funding confirmed! Received 0.005 ETH and 1,000 mUSDC.");
+        await refreshOnChainData();
+      } else {
+        logSim(`Faucet request failed: ${data.error}`);
+      }
+    } catch (err: any) {
+      logSim(`Faucet API error: ${err.message}`);
+    } finally {
+      setIsFunding(false);
+    }
+  };
+
+  // 1. Join circle via invite code (e.g. ROSA-1)
+  const handleJoinCircle = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!joinInviteCode.trim() || !userAddress) return;
+
+    setIsJoining(true);
+    const code = joinInviteCode.trim().toUpperCase();
+    logSim(`Attempting to join circle with code: ${code}...`);
+
+    // Parse circle ID from code (e.g. ROSA-3 -> ID 3)
+    const match = code.match(/ROSA-(\d+)/);
+    if (!match) {
+      logSim("Invalid invite code. Must be in the format: ROSA-[ID] (e.g. ROSA-1)");
+      setIsJoining(false);
+      return;
+    }
+
+    const circleIdVal = BigInt(match[1]);
+
+    try {
+      const account = privateKeyToAccount(privateKey as Address);
+      const walletClient = createWalletClient({
+        account,
+        chain: robinhoodChain,
+        transport: http(),
+      });
+
+      // 1. Fetch circle details to get contribution amount
+      const details = await publicClient.readContract({
+        address: ROSA_CONTRACT_ADDRESS,
+        abi: ROSA_ABI,
+        functionName: "getCircleDetails",
+        args: [circleIdVal],
+      });
+
+      const contributionAmount = details[1];
+
+      // 2. Approve mock USDC to RosaPool contract
+      logSim("Step 1/2: Submitting mUSDC spend approval transaction...");
+      const approveHash = await walletClient.writeContract({
+        address: MOCK_USDC_ADDRESS,
+        abi: ERC20_ABI,
+        functionName: "approve",
+        args: [ROSA_CONTRACT_ADDRESS, contributionAmount],
+      });
+      logSim(`Approval TX sent: ${approveHash.slice(0, 10)}... waiting confirmation`);
+      await publicClient.waitForTransactionReceipt({ hash: approveHash });
+
+      // 3. Call joinCircle
+      logSim("Step 2/2: Submitting join circle transaction to Stylus contract...");
+      const joinHash = await walletClient.writeContract({
+        address: ROSA_CONTRACT_ADDRESS,
+        abi: ROSA_ABI,
+        functionName: "joinCircle",
+        args: [circleIdVal],
+      });
+      logSim(`Join TX sent: ${joinHash.slice(0, 10)}... waiting confirmation`);
+      await publicClient.waitForTransactionReceipt({ hash: joinHash });
+
+      logSim(`Successfully joined Circle #${circleIdVal.toString()}!`);
       setJoinInviteCode("");
-      logSim(`Successfully joined ${newCircle.name}! Passkey smart account linked.`);
-    }, 800);
+      await refreshOnChainData();
+      setSelectedCircleId(circleIdVal.toString());
+    } catch (err: any) {
+      logSim(`Failed to join circle: ${err.message}`);
+      console.error(err);
+    } finally {
+      setIsJoining(false);
+    }
   };
 
   // 2. Create new circle
-  const handleCreateCircle = (e: React.FormEvent) => {
+  const handleCreateCircle = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newCircleName.trim()) return;
+    if (!newCircleName.trim() || !userAddress) return;
 
-    logSim(`Deploying new ROSA contract logic for: ${newCircleName}...`);
+    setIsCreating(true);
+    logSim(`Deploying new ROSA Circle: ${newCircleName}...`);
 
-    setTimeout(() => {
-      const randomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-      const newCircle: Circle = {
-        id: (circles.length + 1).toString(),
-        name: newCircleName,
-        token: "USDC",
-        contribution: newContribution,
-        period: newPeriod,
-        round: 1,
-        totalPot: newContribution, // Started with user deposit
-        yieldEarned: 0.00,
-        inviteCode: `ROSA-${randomCode}`,
-        activePayoutIndex: 0,
-        members: [
-          { name: "You (Smart Wallet)", address: "0x3f...a291", hasReceived: false, missed: 0, isCurrentUser: true }
-        ]
-      };
-      setCircles(prev => [...prev, newCircle]);
-      setSelectedCircleId(newCircle.id);
+    try {
+      const account = privateKeyToAccount(privateKey as Address);
+      const walletClient = createWalletClient({
+        account,
+        chain: robinhoodChain,
+        transport: http(),
+      });
+
+      const contributionDecimals = parseUnits(newContribution.toString(), 6); // USDC uses 6 decimals
+      const periodSeconds = BigInt(newPeriod);
+
+      // Call createCircle
+      logSim("Submitting createCircle transaction to Stylus contract...");
+      const createHash = await walletClient.writeContract({
+        address: ROSA_CONTRACT_ADDRESS,
+        abi: ROSA_ABI,
+        functionName: "createCircle",
+        args: [MOCK_USDC_ADDRESS, contributionDecimals, periodSeconds],
+      });
+      logSim(`Create Circle TX sent: ${createHash.slice(0, 10)}... waiting confirmation`);
+      
+      const receipt = await publicClient.waitForTransactionReceipt({ hash: createHash });
+      logSim("Stylus contract processed Circle creation!");
+
+      // Refresh list to find the new circle ID
+      await refreshOnChainData();
       setNewCircleName("");
-      logSim(`ROSA Pool deployed on Robinhood Chain at 0x8f...4e2d! Invite code: ROSA-${randomCode}`);
-    }, 1000);
+    } catch (err: any) {
+      logSim(`Failed to create circle: ${err.message}`);
+      console.error(err);
+    } finally {
+      setIsCreating(false);
+    }
   };
 
-  // 3. Simulate Monthly Rotation (Trigger Rotation)
-  const handleTriggerRotation = () => {
-    logSim(`Triggering monthly auto-pay check for circle: ${activeCircle.name}...`);
-    
-    // Simulate auto-pulls using session keys
-    let successCount = 0;
-    activeCircle.members.forEach(m => {
-      if (m.missed === 0) {
-        successCount++;
-      }
-    });
+  // 3. Simulate Monthly/Periodic Rotation (Trigger Rotation)
+  const handleTriggerRotation = async () => {
+    if (!activeCircle || !userAddress) return;
 
-    logSim(`Executing auto-pulls: ${successCount}/${activeCircle.members.length} members paid gaslessly.`);
+    setIsRotating(true);
+    logSim(`Triggering rotation check for Circle #${activeCircle.id}...`);
 
-    setTimeout(() => {
-      setCircles(prev => prev.map(c => {
-        if (c.id === activeCircle.id) {
-          // Identify next recipient index
-          let nextIndex = c.activePayoutIndex;
-          let found = false;
-          let updatedMembers = [...c.members];
+    try {
+      const account = privateKeyToAccount(privateKey as Address);
+      const walletClient = createWalletClient({
+        account,
+        chain: robinhoodChain,
+        transport: http(),
+      });
 
-          // Simple rotation: mark previous paid or loop
-          for (let i = 0; i < updatedMembers.length; i++) {
-            const idx = (nextIndex + i) % updatedMembers.length;
-            if (!updatedMembers[idx].hasReceived) {
-              updatedMembers[idx] = { ...updatedMembers[idx], hasReceived: true };
-              nextIndex = (idx + 1) % updatedMembers.length;
-              found = true;
-              logSim(`POT PAYOUT SUCCESSFUL: Transferred ${c.totalPot} USDC to ${updatedMembers[idx].name}!`);
-              break;
-            }
-          }
+      const circleIdVal = BigInt(activeCircle.id);
 
-          // Reset round if all received
-          let nextRound = c.round;
-          if (!found) {
-            logSim("Round completed! Resetting receiving flags and starting next round.");
-            updatedMembers = updatedMembers.map(m => ({ ...m, hasReceived: false }));
-            updatedMembers[0] = { ...updatedMembers[0], hasReceived: true };
-            nextIndex = 1;
-            nextRound += 1;
-            logSim(`POT PAYOUT SUCCESSFUL: Transferred ${c.totalPot} USDC to ${updatedMembers[0].name}!`);
-          }
+      logSim("Submitting triggerRotation transaction to Stylus contract...");
+      const rotHash = await walletClient.writeContract({
+        address: ROSA_CONTRACT_ADDRESS,
+        abi: ROSA_ABI,
+        functionName: "triggerRotation",
+        args: [circleIdVal],
+      });
+      logSim(`Rotation TX sent: ${rotHash.slice(0, 10)}... waiting confirmation`);
+      await publicClient.waitForTransactionReceipt({ hash: rotHash });
 
-          return {
-            ...c,
-            round: nextRound,
-            activePayoutIndex: nextIndex,
-            members: updatedMembers,
-            yieldEarned: parseFloat((c.yieldEarned + (c.totalPot * 0.005)).toFixed(2)) // Simulate +0.5% yield addition
-          };
-        }
-        return c;
-      }));
-    }, 1000);
+      logSim(`On-chain rotation succeeded! Pot disbursed to the next recipient.`);
+      await refreshOnChainData();
+    } catch (err: any) {
+      logSim(`Rotation failed: ${err.message}`);
+      console.error(err);
+    } finally {
+      setIsRotating(false);
+    }
   };
 
-  // Calculate totals
+  // Calculate stats
   const totalLocked = circles.reduce((sum, c) => sum + c.totalPot, 0);
   const totalYield = circles.reduce((sum, c) => sum + c.yieldEarned, 0);
 
@@ -247,10 +324,20 @@ export default function Dashboard() {
           </div>
 
           <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2 border border-white/5 px-3 py-1.5 rounded-xl bg-white/5">
+            <div className="hidden sm:flex items-center space-x-2 border border-white/5 px-3 py-1.5 rounded-xl bg-white/5">
               <Wallet className="h-4 w-4 text-emerald-400" />
-              <span className="text-xs font-semibold text-slate-200">0x3f...a291</span>
+              <span className="text-xs font-mono text-slate-300">
+                {userAddress ? `${userAddress.slice(0, 6)}...${userAddress.slice(-4)}` : "Loading..."}
+              </span>
             </div>
+            <button
+              onClick={refreshOnChainData}
+              disabled={loadingCircles}
+              className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-white/5 transition"
+              title="Refresh blockchain data"
+            >
+              <RefreshCw className={`h-4 w-4 ${loadingCircles ? "animate-spin" : ""}`} />
+            </button>
             <Link 
               href="/"
               className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-white/5 transition"
@@ -260,6 +347,40 @@ export default function Dashboard() {
           </div>
         </div>
       </header>
+
+      {/* Faucet & Balance Strip */}
+      <div className="border-b border-white/5 bg-[#0e1422]/60 z-10 px-6 py-3">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center gap-6 text-sm">
+            <div className="flex items-center space-x-2">
+              <span className="text-slate-400">Gas Balance:</span>
+              <span className="text-white font-mono font-semibold">{ethBalance} ETH</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <span className="text-slate-400">Mock USDC:</span>
+              <span className="text-emerald-400 font-mono font-semibold">{usdcBalance} mUSDC</span>
+            </div>
+          </div>
+
+          <button
+            onClick={handleFaucetRequest}
+            disabled={isFunding}
+            className="w-full md:w-auto px-4 py-1.5 bg-violet-600/20 hover:bg-violet-600/30 text-violet-300 border border-violet-500/30 hover:border-violet-500/50 rounded-xl text-xs font-semibold flex items-center justify-center space-x-1.5 transition"
+          >
+            {isFunding ? (
+              <>
+                <div className="h-3 w-3 border-2 border-violet-400/20 border-t-violet-400 rounded-full animate-spin" />
+                <span>Funding...</span>
+              </>
+            ) : (
+              <>
+                <DollarSign className="h-3.5 w-3.5" />
+                <span>Claim Gas & mUSDC Faucet</span>
+              </>
+            )}
+          </button>
+        </div>
+      </div>
 
       {/* Main Content Dashboard */}
       <div className="flex-1 max-w-7xl mx-auto px-6 py-8 w-full grid lg:grid-cols-12 gap-8 z-10 overflow-y-auto">
@@ -292,108 +413,130 @@ export default function Dashboard() {
               <RotateCw className="h-4 w-4 mr-2 text-violet-400" />
               <span>Your Savings Circles</span>
             </h2>
-            <div className="grid sm:grid-cols-2 gap-4">
-              {circles.map(c => (
-                <button
-                  key={c.id}
-                  onClick={() => setSelectedCircleId(c.id)}
-                  className={`p-6 rounded-2xl border text-left transition duration-200 ${
-                    c.id === selectedCircleId 
-                      ? "bg-violet-600/10 border-violet-500/30 shadow-lg shadow-violet-600/5" 
-                      : "bg-white/5 border-white/5 hover:border-white/10"
-                  }`}
-                >
-                  <div className="flex justify-between items-start mb-4">
-                    <h3 className="font-bold text-white">{c.name}</h3>
-                    <span className="text-[10px] uppercase font-semibold tracking-wider text-violet-400 bg-violet-400/10 px-2 py-0.5 rounded border border-violet-400/20">
-                      {c.period}
-                    </span>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-xs text-slate-400">
-                      <span>Contribution</span>
-                      <span className="text-slate-200 font-semibold">{c.contribution} USDC</span>
+            {loadingCircles && circles.length === 0 ? (
+              <div className="flex flex-col items-center justify-center p-12 border border-white/5 rounded-2xl bg-[#111827]/10">
+                <div className="h-8 w-8 border-2 border-violet-500/20 border-t-violet-500 rounded-full animate-spin mb-4" />
+                <span className="text-sm text-slate-400">Querying Robinhood Chain Stylus state...</span>
+              </div>
+            ) : circles.length === 0 ? (
+              <div className="p-8 border border-dashed border-white/10 rounded-2xl bg-[#111827]/10 text-center">
+                <span className="text-sm text-slate-400 block mb-3">No active savings circles found.</span>
+                <span className="text-xs text-slate-500">Deploy a new circle or join one using an invite code.</span>
+              </div>
+            ) : (
+              <div className="grid sm:grid-cols-2 gap-4">
+                {circles.map(c => (
+                  <button
+                    key={c.id}
+                    onClick={() => setSelectedCircleId(c.id)}
+                    className={`p-6 rounded-2xl border text-left transition duration-200 ${
+                      c.id === selectedCircleId 
+                        ? "bg-violet-600/10 border-violet-500/30 shadow-lg shadow-violet-600/5" 
+                        : "bg-white/5 border-white/5 hover:border-white/10"
+                    }`}
+                  >
+                    <div className="flex justify-between items-start mb-4">
+                      <h3 className="font-bold text-white">Circle #{c.id}</h3>
+                      <span className="text-[10px] uppercase font-semibold tracking-wider text-violet-400 bg-violet-400/10 px-2 py-0.5 rounded border border-violet-400/20">
+                        {c.period}
+                      </span>
                     </div>
-                    <div className="flex justify-between text-xs text-slate-400">
-                      <span>Members</span>
-                      <span className="text-slate-200 font-semibold">{c.members.length} active</span>
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-xs text-slate-400">
+                        <span>Contribution</span>
+                        <span className="text-slate-200 font-semibold">{c.contribution} {c.tokenSymbol}</span>
+                      </div>
+                      <div className="flex justify-between text-xs text-slate-400">
+                        <span>Members</span>
+                        <span className="text-slate-200 font-semibold">{c.members.length} active</span>
+                      </div>
+                      <div className="flex justify-between text-xs text-slate-400">
+                        <span>Total Pot</span>
+                        <span className="text-emerald-400 font-semibold">{c.totalPot} {c.tokenSymbol}</span>
+                      </div>
                     </div>
-                    <div className="flex justify-between text-xs text-slate-400">
-                      <span>Total Pot</span>
-                      <span className="text-emerald-400 font-semibold">{c.totalPot} USDC</span>
-                    </div>
-                  </div>
-                </button>
-              ))}
-            </div>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Detailed View of Selected Circle */}
-          <div className="p-6 rounded-3xl bg-[#111827]/30 border border-white/5 space-y-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <div>
-                <span className="text-xs text-slate-400 block uppercase tracking-wider">Active Circle Focus</span>
-                <h2 className="text-xl font-bold text-white">{activeCircle.name}</h2>
-              </div>
-              
-              <div className="flex items-center space-x-3">
-                <div className="text-right">
-                  <span className="text-[10px] text-slate-400 block">Invite Code</span>
-                  <span className="text-sm font-mono font-bold text-violet-400 bg-violet-400/5 border border-violet-400/10 px-2.5 py-1 rounded-lg">
-                    {activeCircle.inviteCode}
-                  </span>
-                </div>
-                {/* Simulation Trigger button */}
-                <button
-                  onClick={handleTriggerRotation}
-                  className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-[#090D16] font-bold text-xs rounded-xl flex items-center space-x-1.5 shadow-md shadow-emerald-500/10"
-                >
-                  <Play className="h-3 w-3 fill-[#090D16]" />
-                  <span>Simulate Payout</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Circle Details Table */}
-            <div className="space-y-4">
-              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Circle Members & Rotation Status</h3>
-              <div className="border border-white/5 rounded-2xl overflow-hidden bg-[#090D16]/40">
-                <div className="grid grid-cols-12 gap-4 bg-white/5 px-6 py-3 text-xs text-slate-400 font-medium">
-                  <div className="col-span-5">Member Name</div>
-                  <div className="col-span-4">Smart Account</div>
-                  <div className="col-span-3 text-right">Pot Received</div>
+          {activeCircle && (
+            <div className="p-6 rounded-3xl bg-[#111827]/30 border border-white/5 space-y-6">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                  <span className="text-xs text-slate-400 block uppercase tracking-wider">Active Circle Focus</span>
+                  <h2 className="text-xl font-bold text-white">Circle #{activeCircle.id} details</h2>
                 </div>
                 
-                <div className="divide-y divide-white/5">
-                  {activeCircle.members.map((m, idx) => (
-                    <div key={idx} className="grid grid-cols-12 gap-4 px-6 py-4 text-sm items-center">
-                      <div className="col-span-5 font-semibold text-white flex items-center space-x-2">
-                        <span>{m.name}</span>
-                        {m.isCurrentUser && (
-                          <span className="text-[9px] bg-violet-500/20 text-violet-300 border border-violet-500/30 px-1.5 py-0.2 rounded-full">
-                            You
+                <div className="flex items-center space-x-3">
+                  <div className="text-right">
+                    <span className="text-[10px] text-slate-400 block">Invite Code</span>
+                    <span className="text-sm font-mono font-bold text-violet-400 bg-violet-400/5 border border-violet-400/10 px-2.5 py-1 rounded-lg">
+                      {activeCircle.inviteCode}
+                    </span>
+                  </div>
+                  <button
+                    onClick={handleTriggerRotation}
+                    disabled={isRotating || activeCircle.members.length === 0}
+                    className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 disabled:from-emerald-500/30 disabled:to-teal-500/30 disabled:text-slate-500 text-[#090D16] font-bold text-xs rounded-xl flex items-center space-x-1.5 shadow-md shadow-emerald-500/10 transition"
+                  >
+                    {isRotating ? (
+                      <div className="h-3 w-3 border-2 border-[#090D16]/20 border-t-[#090D16] rounded-full animate-spin" />
+                    ) : (
+                      <Play className="h-3 w-3 fill-[#090D16]" />
+                    )}
+                    <span>Trigger Rotation</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Circle Details Table */}
+              <div className="space-y-4">
+                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Circle Members & Rotation Status</h3>
+                <div className="border border-white/5 rounded-2xl overflow-hidden bg-[#090D16]/40">
+                  <div className="grid grid-cols-12 gap-4 bg-white/5 px-6 py-3 text-xs text-slate-400 font-medium">
+                    <div className="col-span-5">Member Name</div>
+                    <div className="col-span-4">Smart Account / Wallet</div>
+                    <div className="col-span-3 text-right">Pot Received</div>
+                  </div>
+                  
+                  <div className="divide-y divide-white/5">
+                    {activeCircle.members.map((m, idx) => (
+                      <div key={idx} className="grid grid-cols-12 gap-4 px-6 py-4 text-sm items-center">
+                        <div className="col-span-5 font-semibold text-white flex items-center space-x-2">
+                          <span>
+                            {m.isCurrentUser ? "You" : `Member #${idx + 1}`}
                           </span>
-                        )}
+                          {m.isCurrentUser && (
+                            <span className="text-[9px] bg-violet-500/20 text-violet-300 border border-violet-500/30 px-1.5 py-0.2 rounded-full">
+                              Smart Wallet
+                            </span>
+                          )}
+                        </div>
+                        <div className="col-span-4 font-mono text-xs text-slate-400">
+                          {m.address.slice(0, 8)}...{m.address.slice(-6)}
+                        </div>
+                        <div className="col-span-3 text-right">
+                          {m.hasReceived ? (
+                            <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-400/10 text-emerald-400 border border-emerald-400/20">
+                              <CheckCircle className="h-3.5 w-3.5" />
+                              <span>Paid Out</span>
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-white/5 text-slate-400 border border-white/5">
+                              <span>Pending</span>
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      <div className="col-span-4 font-mono text-xs text-slate-400">{m.address}</div>
-                      <div className="col-span-3 text-right">
-                        {m.hasReceived ? (
-                          <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-400/10 text-emerald-400 border border-emerald-400/20">
-                            <CheckCircle className="h-3.5 w-3.5" />
-                            <span>Paid Out</span>
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-white/5 text-slate-400 border border-white/5">
-                            <span>Pending</span>
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Right Column - Forms & Simulation Console (4 cols) */}
@@ -410,14 +553,19 @@ export default function Dashboard() {
                 type="text"
                 value={joinInviteCode}
                 onChange={(e) => setJoinInviteCode(e.target.value)}
-                placeholder="e.g., LON-DEV-99"
+                placeholder="e.g., ROSA-1"
                 className="w-full h-11 px-4 rounded-xl bg-white/5 border border-white/5 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-violet-500/50"
               />
               <button
                 type="submit"
-                className="w-full h-11 bg-violet-600 hover:bg-violet-500 text-white font-semibold text-sm rounded-xl transition"
+                disabled={isJoining || !joinInviteCode.trim()}
+                className="w-full h-11 bg-violet-600 hover:bg-violet-500 disabled:bg-violet-600/30 disabled:text-slate-500 text-white font-semibold text-sm rounded-xl transition flex items-center justify-center"
               >
-                Join Circle
+                {isJoining ? (
+                  <div className="h-4 w-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                ) : (
+                  "Join Circle"
+                )}
               </button>
             </form>
           </div>
@@ -435,14 +583,14 @@ export default function Dashboard() {
                   type="text"
                   value={newCircleName}
                   onChange={(e) => setNewCircleName(e.target.value)}
-                  placeholder="e.g., London Roommates"
+                  placeholder="e.g., London Devs Circle"
                   className="w-full h-11 px-4 rounded-xl bg-white/5 border border-white/5 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-violet-500/50"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[10px] text-slate-400 uppercase tracking-wider block mb-1.5">Contribution (USDC)</label>
+                  <label className="text-[10px] text-slate-400 uppercase tracking-wider block mb-1.5">Contribution (mUSDC)</label>
                   <input
                     type="number"
                     value={newContribution}
@@ -457,17 +605,26 @@ export default function Dashboard() {
                     onChange={(e) => setNewPeriod(e.target.value)}
                     className="w-full h-11 px-3 rounded-xl bg-[#090D16] border border-white/5 text-white text-sm focus:outline-none focus:border-violet-500/50"
                   >
-                    <option value="Weekly">Weekly</option>
-                    <option value="Monthly">Monthly</option>
+                    <option value="60">1 Min (Demo)</option>
+                    <option value="300">5 Min (Demo)</option>
+                    <option value="3600">Hourly</option>
+                    <option value="86400">Daily</option>
+                    <option value="604800">Weekly</option>
+                    <option value="2592000">Monthly</option>
                   </select>
                 </div>
               </div>
 
               <button
                 type="submit"
-                className="w-full h-11 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-semibold text-sm rounded-xl shadow-lg shadow-violet-600/15 transition"
+                disabled={isCreating || !newCircleName.trim()}
+                className="w-full h-11 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 disabled:from-violet-600/30 disabled:to-indigo-600/30 disabled:text-slate-500 text-white font-semibold text-sm rounded-xl shadow-lg shadow-violet-600/15 transition flex items-center justify-center"
               >
-                Deploy Circle
+                {isCreating ? (
+                  <div className="h-4 w-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                ) : (
+                  "Deploy Circle"
+                )}
               </button>
             </form>
           </div>
@@ -476,7 +633,7 @@ export default function Dashboard() {
           <div className="p-6 rounded-2xl bg-[#111827]/40 border border-white/5 space-y-4">
             <div className="flex justify-between items-center">
               <h3 className="font-bold text-white text-xs uppercase tracking-wider flex items-center">
-                <RotateCw className="h-3.5 w-3.5 mr-2 text-emerald-400 animate-spin-slow" />
+                <RotateCw className="h-3.5 w-3.5 mr-2 text-emerald-400" />
                 <span>Simulation Console</span>
               </h3>
               <button 
@@ -489,7 +646,7 @@ export default function Dashboard() {
             
             <div className="h-40 rounded-xl bg-[#090D16] border border-white/5 p-4 overflow-y-auto font-mono text-[11px] space-y-2 text-slate-400">
               {simulationLog.length === 0 ? (
-                <div className="text-slate-600 text-center py-12">No simulation events logged yet. Click "Simulate Payout" to view rotation logic.</div>
+                <div className="text-slate-600 text-center py-12">No simulation events logged yet. Trigger an action to print transaction receipts.</div>
               ) : (
                 simulationLog.map((log, i) => (
                   <div key={i} className="leading-relaxed border-l-2 border-violet-500/50 pl-2">

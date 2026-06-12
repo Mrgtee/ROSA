@@ -8,7 +8,7 @@ import {
 } from "@zerodev/passkey-validator";
 import { http, createPublicClient } from "viem";
 
-const ROBINHOOD_TESTNET_RPC = "https://testnet.chain.robinhood.com";
+const ROBINHOOD_TESTNET_RPC = "https://rpc.testnet.chain.robinhood.com";
 const ENTRYPOINT_ADDRESS_V07 = "0x0000000071727E53fc824ae655664d5d39d22b27" as any;
 
 export const publicClient = createPublicClient({
