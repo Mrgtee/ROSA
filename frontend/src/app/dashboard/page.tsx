@@ -17,7 +17,9 @@ import {
   HelpCircle,
   ArrowRight,
   RefreshCw,
-  DollarSign
+  DollarSign,
+  Copy,
+  Check
 } from "lucide-react";
 import Link from "next/link";
 import { 
@@ -60,9 +62,17 @@ export default function Dashboard() {
   const [isCreating, setIsCreating] = useState<boolean>(false);
   const [isJoining, setIsJoining] = useState<boolean>(false);
   const [isRotating, setIsRotating] = useState<boolean>(false);
+  const [copiedAddress, setCopiedAddress] = useState<boolean>(false);
 
   // Active Circle computed property
   const activeCircle = circles.find(c => c.id === selectedCircleId) || circles[0];
+
+  const handleCopyAddress = () => {
+    if (!userAddress) return;
+    navigator.clipboard.writeText(userAddress);
+    setCopiedAddress(true);
+    setTimeout(() => setCopiedAddress(false), 2000);
+  };
 
   const logSim = (msg: string) => {
     setSimulationLog(prev => [`[${new Date().toLocaleTimeString()}] ${msg}`, ...prev].slice(0, 15));
@@ -337,12 +347,21 @@ export default function Dashboard() {
                 {userEmail}
               </span>
             )}
-            <div className="hidden sm:flex items-center space-x-2 border border-white/5 px-3 py-1.5 rounded-xl bg-white/5">
+            <button
+              onClick={handleCopyAddress}
+              className="hidden sm:flex items-center space-x-2 border border-white/5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 hover:border-white/10 transition cursor-pointer text-left focus:outline-none"
+              title="Copy Smart Wallet Address"
+            >
               <Wallet className="h-4 w-4 text-emerald-400" />
               <span className="text-xs font-mono text-slate-300">
                 {userAddress ? `${userAddress.slice(0, 6)}...${userAddress.slice(-4)}` : "Loading..."}
               </span>
-            </div>
+              {copiedAddress ? (
+                <Check className="h-3.5 w-3.5 text-emerald-400 shrink-0 ml-1" />
+              ) : (
+                <Copy className="h-3.5 w-3.5 text-slate-500 shrink-0 ml-1" />
+              )}
+            </button>
             <button
               onClick={refreshOnChainData}
               disabled={loadingCircles}
