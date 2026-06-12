@@ -51,12 +51,18 @@ export default function Dashboard() {
   const [newContribution, setNewContribution] = useState(10);
   const [newPeriod, setNewPeriod] = useState("60"); // default 1 Min for demo
   const [customTokenAddress, setCustomTokenAddress] = useState("");
+  const [customInviteCode, setCustomInviteCode] = useState(""); // custom invite code prefix
   const [joinInviteCode, setJoinInviteCode] = useState("");
   const [userEmail, setUserEmail] = useState<string>("");
 
+  // Withdraw states
+  const [withdrawRecipient, setWithdrawRecipient] = useState("");
+  const [withdrawAmount, setWithdrawAmount] = useState(10);
+  const [withdrawTokenAddress, setWithdrawTokenAddress] = useState("");
+  const [isWithdrawing, setIsWithdrawing] = useState(false);
+
   // UI state
   const [simulationLog, setSimulationLog] = useState<string[]>([]);
-  const [isFunding, setIsFunding] = useState<boolean>(false);
   const [isCreating, setIsCreating] = useState<boolean>(false);
   const [isJoining, setIsJoining] = useState<boolean>(false);
   const [isRotating, setIsRotating] = useState<boolean>(false);
@@ -103,6 +109,7 @@ export default function Dashboard() {
   // Sync default form token address when chain changes
   useEffect(() => {
     setCustomTokenAddress(network.tokenAddress);
+    setWithdrawTokenAddress(network.tokenAddress);
   }, [selectedChainId]);
 
   // Fetch balances and circles
@@ -154,32 +161,7 @@ export default function Dashboard() {
     }
   }, [userAddress, selectedChainId]);
 
-  // Request faucet funds (Sends gas ETH on the selected network)
-  const handleFaucetRequest = async () => {
-    if (!userAddress) return;
-    setIsFunding(true);
-    logSim(`Requesting testnet gas ETH on ${network.chain.name} from faucet API...`);
-    try {
-      const res = await fetch("/api/fund", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ address: userAddress, chainId: selectedChainId }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        logSim(`Gas funding confirmed! Gas received on ${network.chain.name}.`);
-        await refreshOnChainData();
-      } else {
-        logSim(`Faucet request failed: ${data.error}`);
-      }
-    } catch (err: any) {
-      logSim(`Faucet API error: ${err.message}`);
-    } finally {
-      setIsFunding(false);
-    }
-  };
-
-  // 1. Join circle via invite code (e.g. ROSA-1)
+  // 1. Join circle via invite code (e.g. ROSA-1 or MY-CIRCLE-5)
   const handleJoinCircle = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!joinInviteCode.trim() || !userAddress) return;
@@ -188,14 +170,17 @@ export default function Dashboard() {
     const code = joinInviteCode.trim().toUpperCase();
     logSim(`Attempting to join circle with code: ${code}...`);
 
-    const match = code.match(/ROSA-(\d+)/);
-    if (!match) {
-      logSim("Invalid invite code. Must be in the format: ROSA-[ID] (e.g. ROSA-1)");
+    const codeParts = code.split("-");
+    const circleIdStr = codeParts[codeParts.length - 1];
+    const circleIdNum = Number(circleIdStr);
+
+    if (isNaN(circleIdNum) || circleIdNum <= 0) {
+      logSim("Invalid invite code. Must end with the Circle ID (e.g. ROSA-1 or LONDON-DEVS-5)");
       setIsJoining(false);
       return;
     }
 
-    const circleIdVal = BigInt(match[1]);
+    const circleIdVal = BigInt(circleIdNum);
 
     try {
       const client = getPublicClient(selectedChainId);
@@ -240,6 +225,15 @@ export default function Dashboard() {
       await client.waitForTransactionReceipt({ hash: joinHash });
 
       logSim(`Successfully joined Circle #${circleIdVal.toString()}!`);
+
+      // Save prefix to localStorage
+      if (codeParts.length > 1) {
+        const prefix = codeParts.slice(0, -1).join("-");
+        const inviteCodeMap = JSON.parse(localStorage.getItem("rosa_circle_invite_codes") || "{}");
+        inviteCodeMap[`${selectedChainId}_${circleIdVal.toString()}`] = prefix;
+        localStorage.setItem("rosa_circle_invite_codes", JSON.stringify(inviteCodeMap));
+      }
+
       setJoinInviteCode("");
       await refreshOnChainData();
       setSelectedCircleId(circleIdVal.toString());
@@ -285,13 +279,73 @@ export default function Dashboard() {
       await client.waitForTransactionReceipt({ hash: createHash });
       logSim("Stylus contract processed Circle creation!");
 
-      await refreshOnChainData();
+      // Fetch new circle ID
+      const nextIdBig = await client.readContract({
+        address: network.poolAddress,
+        abi: ROSA_ABI,
+        functionName: "getCircleCount",
+      });
+      const newCircleId = Number(nextIdBig);
+
+      // Save custom invite code mapping to localStorage
+      const prefix = customInviteCode.trim() || "ROSA";
+      const inviteCodeMap = JSON.parse(localStorage.getItem("rosa_circle_invite_codes") || "{}");
+      inviteCodeMap[`${selectedChainId}_${newCircleId}`] = prefix;
+      localStorage.setItem("rosa_circle_invite_codes", JSON.stringify(inviteCodeMap));
+
+      logSim(`Circle #${newCircleId} created with invite code: ${prefix}-${newCircleId}`);
       setNewCircleName("");
+      setCustomInviteCode("");
+      await refreshOnChainData();
     } catch (err: any) {
       logSim(`Failed to create circle: ${err.message}`);
       console.error(err);
     } finally {
       setIsCreating(false);
+    }
+  };
+
+  // 3. Withdraw/Transfer Tokens
+  const handleWithdraw = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!withdrawRecipient.trim() || !userAddress || !privateKey) return;
+
+    setIsWithdrawing(true);
+    logSim(`Initiating token withdrawal to ${withdrawRecipient}...`);
+
+    try {
+      const client = getPublicClient(selectedChainId);
+      const account = privateKeyToAccount(privateKey as Address);
+      const walletClient = createWalletClient({
+        account,
+        chain: network.chain,
+        transport: http(),
+      });
+
+      const tokenToWithdraw = (withdrawTokenAddress.trim() || network.tokenAddress) as Address;
+      const decimals = 6; // Assume 6 decimals for USDG / USDC (default)
+      const amountUnits = parseUnits(withdrawAmount.toString(), decimals);
+
+      logSim(`Submitting ERC-20 transfer of ${withdrawAmount} tokens to ${withdrawRecipient}...`);
+      
+      const transferHash = await walletClient.writeContract({
+        address: tokenToWithdraw,
+        abi: ERC20_ABI,
+        functionName: "transfer",
+        args: [withdrawRecipient as Address, amountUnits],
+      });
+
+      logSim(`Transfer TX sent: ${transferHash.slice(0, 10)}... waiting confirmation`);
+      await client.waitForTransactionReceipt({ hash: transferHash });
+      logSim(`Withdrawal successful! Transferred ${withdrawAmount} tokens.`);
+
+      setWithdrawRecipient("");
+      await refreshOnChainData();
+    } catch (err: any) {
+      logSim(`Withdrawal failed: ${err.message}`);
+      console.error(err);
+    } finally {
+      setIsWithdrawing(false);
     }
   };
 
@@ -455,23 +509,6 @@ export default function Dashboard() {
                 Circle USDC Faucet
               </a>
             )}
-            <button
-              onClick={handleFaucetRequest}
-              disabled={isFunding}
-              className="px-4 py-1.5 bg-violet-600/20 hover:bg-violet-600/30 text-violet-300 border border-violet-500/30 hover:border-violet-500/50 rounded-xl text-xs font-semibold flex items-center justify-center space-x-1.5 transition"
-            >
-              {isFunding ? (
-                <>
-                  <div className="h-3 w-3 border-2 border-violet-400/20 border-t-violet-400 rounded-full animate-spin" />
-                  <span>Funding...</span>
-                </>
-              ) : (
-                <>
-                  <DollarSign className="h-3.5 w-3.5" />
-                  <span>Claim Gas Faucet</span>
-                </>
-              )}
-            </button>
           </div>
         </div>
       </div>
@@ -683,6 +720,20 @@ export default function Dashboard() {
               </div>
 
               <div>
+                <label className="text-[10px] text-slate-400 uppercase tracking-wider block mb-1.5">Invite Code Prefix</label>
+                <input
+                  type="text"
+                  value={customInviteCode}
+                  onChange={(e) => setCustomInviteCode(e.target.value.replace(/[^a-zA-Z0-9]/g, "").toUpperCase())}
+                  placeholder="e.g., LONDON-DEVS"
+                  className="w-full h-11 px-4 rounded-xl bg-white/5 border border-white/5 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-violet-500/50"
+                />
+                <span className="text-[9px] text-slate-500 mt-1 block">
+                  Suffix with circle ID is auto-appended. E.g., LONDON-DEVS-[ID]
+                </span>
+              </div>
+
+              <div>
                 <label className="text-[10px] text-slate-400 uppercase tracking-wider block mb-1.5">Stablecoin Token Address</label>
                 <input
                   type="text"
@@ -732,6 +783,62 @@ export default function Dashboard() {
                   <div className="h-4 w-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
                 ) : (
                   "Deploy Circle"
+                )}
+              </button>
+            </form>
+          </div>
+
+          {/* Withdraw / Transfer Tokens */}
+          <div className="p-6 rounded-2xl bg-[#111827]/40 border border-white/5 space-y-4">
+            <h3 className="font-bold text-white flex items-center">
+              <LogOut className="h-4 w-4 mr-2 text-violet-400 rotate-180" />
+              <span>Withdraw / Transfer Tokens</span>
+            </h3>
+            <form onSubmit={handleWithdraw} className="space-y-4">
+              <div>
+                <label className="text-[10px] text-slate-400 uppercase tracking-wider block mb-1.5">Recipient Wallet Address</label>
+                <input
+                  type="text"
+                  value={withdrawRecipient}
+                  onChange={(e) => setWithdrawRecipient(e.target.value)}
+                  placeholder="0x..."
+                  required
+                  className="w-full h-11 px-4 rounded-xl bg-white/5 border border-white/5 text-white placeholder-slate-500 text-xs focus:outline-none focus:border-violet-500/50 font-mono"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[10px] text-slate-400 uppercase tracking-wider block mb-1.5">Amount</label>
+                  <input
+                    type="number"
+                    value={withdrawAmount}
+                    onChange={(e) => setWithdrawAmount(Number(e.target.value))}
+                    required
+                    className="w-full h-11 px-4 rounded-xl bg-white/5 border border-white/5 text-white text-sm focus:outline-none focus:border-violet-500/50"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] text-slate-400 uppercase tracking-wider block mb-1.5">Token Address</label>
+                  <input
+                    type="text"
+                    value={withdrawTokenAddress}
+                    onChange={(e) => setWithdrawTokenAddress(e.target.value)}
+                    placeholder="0x..."
+                    className="w-full h-11 px-4 rounded-xl bg-white/5 border border-white/5 text-white placeholder-slate-500 text-xs focus:outline-none focus:border-violet-500/50 font-mono"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isWithdrawing || !withdrawRecipient.trim()}
+                className="w-full h-11 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 disabled:from-red-600/30 disabled:to-rose-600/30 disabled:text-slate-500 text-white font-semibold text-sm rounded-xl shadow-lg shadow-red-600/15 transition flex items-center justify-center"
+              >
+                {isWithdrawing ? (
+                  <div className="h-4 w-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                ) : (
+                  "Withdraw Tokens"
                 )}
               </button>
             </form>

@@ -176,7 +176,18 @@ export async function fetchOnChainCircles(chainId: number, userAddress: string):
           }
         }
 
-        const inviteCode = `ROSA-${i}`;
+        let inviteCode = `ROSA-${i}`;
+        if (typeof window !== "undefined") {
+          try {
+            const inviteCodeMap = JSON.parse(localStorage.getItem("rosa_circle_invite_codes") || "{}");
+            const savedPrefix = inviteCodeMap[`${chainId}_${i}`];
+            if (savedPrefix) {
+              inviteCode = `${savedPrefix}-${i}`;
+            }
+          } catch (e) {
+            console.error("Error loading invite code prefix:", e);
+          }
+        }
 
         // Get token symbol
         let tokenSymbol = config.tokenSymbol;
