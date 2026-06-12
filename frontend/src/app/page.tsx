@@ -13,14 +13,37 @@ import {
 import Link from "next/link";
 
 export default function Home() {
+  const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const handlePasskeyConnect = () => {
+  const handleConnect = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim() || !email.includes("@")) {
+      alert("Please enter a valid email address");
+      return;
+    }
+
     setIsLoading(true);
-    // Simulate Passkey loading and redirect to dashboard
-    setTimeout(() => {
-      window.location.href = "/dashboard";
-    }, 1200);
+    try {
+      // Deterministically generate private key from email
+      const encoder = new TextEncoder();
+      const data = encoder.encode(email.trim().toLowerCase() + "rosa-open-house-london-2026-salt");
+      const hashBuffer = await window.crypto.subtle.digest("SHA-256", data);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const hashHex = hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+      const privateKey = "0x" + hashHex;
+
+      // Store private key and email
+      localStorage.setItem("rosa_demo_key", privateKey);
+      localStorage.setItem("rosa_user_email", email.trim().toLowerCase());
+
+      setTimeout(() => {
+        window.location.href = "/dashboard";
+      }, 1000);
+    } catch (err) {
+      console.error(err);
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -43,7 +66,7 @@ export default function Home() {
                 ROSA
               </span>
               <span className="ml-2 px-2 py-0.5 text-[10px] font-semibold text-emerald-400 bg-emerald-400/10 rounded-full border border-emerald-400/20">
-                L2 testnet
+                Arbitrum Sepolia
               </span>
             </div>
           </div>
@@ -74,27 +97,40 @@ export default function Home() {
             and earn yields on your idle capital.
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
-            <button
-              onClick={handlePasskeyConnect}
-              disabled={isLoading}
-              className="w-full sm:w-auto px-8 h-14 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-semibold rounded-2xl flex items-center justify-center space-x-3 shadow-lg shadow-violet-600/20 transition duration-200"
-            >
-              {isLoading ? (
-                <div className="h-5 w-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-              ) : (
-                <>
-                  <Smartphone className="h-5 w-5" />
-                  <span>Connect with Passkey</span>
-                  <ArrowRight className="h-4 w-4" />
-                </>
-              )}
-            </button>
-            <div className="flex items-center space-x-2 text-xs text-slate-400">
-              <ShieldCheck className="h-4 w-4 text-emerald-400" />
-              <span>Non-Custodial Account Abstraction</span>
+          <form onSubmit={handleConnect} className="max-w-md mx-auto lg:mx-0 space-y-4">
+            <div className="relative">
+              <input
+                type="email"
+                required
+                placeholder="Enter your email to connect..."
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full h-14 pl-5 pr-12 rounded-2xl bg-white/5 border border-white/10 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-violet-500/50 transition"
+              />
             </div>
-          </div>
+            
+            <div className="flex flex-col sm:flex-row items-center gap-4">
+              <button
+                type="submit"
+                disabled={isLoading || !email.trim()}
+                className="w-full sm:w-auto px-8 h-14 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 disabled:from-violet-600/30 disabled:to-indigo-500/30 disabled:text-slate-500 text-white font-semibold rounded-2xl flex items-center justify-center space-x-3 shadow-lg shadow-violet-600/20 transition duration-200"
+              >
+                {isLoading ? (
+                  <div className="h-5 w-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <>
+                    <Smartphone className="h-5 w-5" />
+                    <span>Login with Social / Email</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </>
+                )}
+              </button>
+              <div className="flex items-center space-x-2 text-xs text-slate-400">
+                <ShieldCheck className="h-4 w-4 text-emerald-400" />
+                <span>Multi-Device Social Accounts</span>
+              </div>
+            </div>
+          </form>
         </div>
 
         {/* Dynamic Graphic Mockup */}
