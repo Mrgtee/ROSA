@@ -4,15 +4,15 @@ const solc = require('solc');
 const { createPublicClient, createWalletClient, http } = require('viem');
 const { privateKeyToAccount } = require('viem/accounts');
 
-// Robinhood Chain Testnet RPC and Chain ID
-const ROBINHOOD_TESTNET_RPC = "https://rpc.testnet.chain.robinhood.com";
+// Arbitrum Sepolia RPC and Chain ID
+const ARBITRUM_SEPOLIA_RPC = "https://sepolia-rollup.arbitrum.io/rpc";
 const chain = {
-  id: 46630,
-  name: "Robinhood Chain Testnet",
+  id: 421614,
+  name: "Arbitrum Sepolia",
   nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
   rpcUrls: {
-    default: { http: [ROBINHOOD_TESTNET_RPC] },
-    public: { http: [ROBINHOOD_TESTNET_RPC] },
+    default: { http: [ARBITRUM_SEPOLIA_RPC] },
+    public: { http: [ARBITRUM_SEPOLIA_RPC] },
   },
 };
 
@@ -60,6 +60,7 @@ contract MockERC20 {
         return true;
     }
     
+    // Public mint allows anyone to claim test USDC on-chain
     function mint(address to, uint256 value) external {
         _mint(to, value);
     }
@@ -108,8 +109,8 @@ function compileContract() {
 }
 
 async function main() {
-  // Read private key from .env file
-  const envContent = fs.readFileSync(path.resolve(__dirname, '.env'), 'utf8');
+  // Read private key from root .env file
+  const envContent = fs.readFileSync(path.resolve(__dirname, '..', '.env'), 'utf8');
   let privateKey = '';
   const envLines = envContent.split('\n');
   for (const line of envLines) {
@@ -159,9 +160,9 @@ async function main() {
 
   // Save the address to a local file so the frontend can read it
   fs.writeFileSync(
-    path.resolve(__dirname, 'frontend', 'src', 'lib', 'contractAddresses.json'),
+    path.resolve(__dirname, '..', 'frontend', 'src', 'lib', 'contractAddresses.json'),
     JSON.stringify({
-      rosaPool: "0x707fd662f3877be6ea408cebee3156ee7432efc2",
+      rosaPool: "0x315f644ca5d477dcbb17ced6de90fd8f9e593d0b",
       mockUsdc: contractAddress
     }, null, 2)
   );
