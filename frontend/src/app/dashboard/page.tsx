@@ -137,7 +137,7 @@ export default function Dashboard() {
       });
       const data = await res.json();
       if (data.success) {
-        logSim("Faucet funding confirmed! Received 0.005 ETH and 1,000 mUSDC.");
+        logSim("Faucet funding confirmed! Received 0.001 ETH and 1,000 mUSDC.");
         await refreshOnChainData();
       } else {
         logSim(`Faucet request failed: ${data.error}`);

@@ -36,10 +36,10 @@ export async function POST(request: Request) {
 
     console.log(`Faucet funding request for ${address} from faucet ${account.address}`);
 
-    // Send 0.005 ETH to the user for gas
+    // Send 0.001 ETH to the user for gas
     const ethTxHash = await walletClient.sendTransaction({
       to: address as Address,
-      value: parseEther("0.005"),
+      value: parseEther("0.001"),
     });
     console.log(`Sent ETH gas tx: ${ethTxHash}`);
 
@@ -60,7 +60,7 @@ export async function POST(request: Request) {
       success: true,
       ethTxHash,
       usdcTxHash,
-      message: "Successfully funded with 0.005 ETH and 1,000 mUSDC"
+      message: "Successfully funded with 0.001 ETH and 1,000 mUSDC"
     });
   } catch (error: any) {
     console.error("Faucet error:", error);
