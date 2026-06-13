@@ -73,6 +73,12 @@ export default function Dashboard() {
   const [collateralAmount, setCollateralAmount] = useState<number>(10);
   const [isExiting, setIsExiting] = useState<boolean>(false);
 
+  // Interactive UI states
+  const [hoveredMember, setHoveredMember] = useState<number | null>(null);
+  const [estContribution, setEstContribution] = useState<number>(50);
+  const [estMembers, setEstMembers] = useState<number>(6);
+  const [estApy, setEstApy] = useState<number>(5.5);
+
   // Get active network config
   const network = getNetworkConfig(selectedChainId);
   const activeCircle = circles.find(c => c.id === selectedCircleId) || circles[0];
@@ -476,12 +482,12 @@ export default function Dashboard() {
   const totalYield = circles.reduce((sum, c) => sum + c.yieldEarned, 0);
 
   return (
-    <div className="flex-1 flex flex-col bg-[#090D16] relative overflow-hidden">
+    <div className="flex-1 flex flex-col bg-[#030712] relative overflow-hidden">
       {/* Background glow */}
       <div className="absolute top-[-10%] right-[-10%] w-[400px] h-[400px] rounded-full bg-violet-600/5 blur-[100px] pointer-events-none" />
 
       {/* Header */}
-      <header className="border-b border-white/5 bg-[#090D16]/50 backdrop-blur-md z-10">
+      <header className="border-b border-white/5 bg-[#030712]/50 backdrop-blur-md z-10">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <div className="h-9 w-9 rounded-lg bg-gradient-to-tr from-violet-600 to-emerald-400 p-[1px]">
@@ -636,6 +642,89 @@ export default function Dashboard() {
             </div>
           </div>
 
+          {/* Yield Estimator Card */}
+          <div className="p-6 rounded-3xl space-y-6 glass-panel">
+            <div>
+              <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center">
+                <TrendingUp className="h-4 w-4 mr-2 text-emerald-400" />
+                <span>Yield Estimator & Savings Boost</span>
+              </h3>
+              <p className="text-xs text-slate-400 mt-1">
+                See how rotating community savings earn real yield compared to keeping cash at home.
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-6">
+              {/* Sliders */}
+              <div className="md:col-span-2 space-y-4">
+                <div>
+                  <div className="flex justify-between text-xs mb-1.5">
+                    <span className="text-slate-400">Contribution per Period:</span>
+                    <span className="text-white font-semibold font-mono">${estContribution}</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="10"
+                    max="1000"
+                    step="10"
+                    value={estContribution}
+                    onChange={(e) => setEstContribution(Number(e.target.value))}
+                    className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-violet-500"
+                  />
+                </div>
+
+                <div>
+                  <div className="flex justify-between text-xs mb-1.5">
+                    <span className="text-slate-400">Circle Size (Members):</span>
+                    <span className="text-white font-semibold font-mono">{estMembers} members</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="3"
+                    max="12"
+                    step="1"
+                    value={estMembers}
+                    onChange={(e) => setEstMembers(Number(e.target.value))}
+                    className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-violet-500"
+                  />
+                </div>
+
+                <div>
+                  <div className="flex justify-between text-xs mb-1.5">
+                    <span className="text-slate-400">DeFi APY Rate:</span>
+                    <span className="text-white font-semibold font-mono">{estApy}%</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="2"
+                    max="15"
+                    step="0.5"
+                    value={estApy}
+                    onChange={(e) => setEstApy(Number(e.target.value))}
+                    className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-violet-500"
+                  />
+                </div>
+              </div>
+
+              {/* Outputs */}
+              <div className="p-4 rounded-2xl bg-white/5 border border-white/5 flex flex-col justify-between space-y-4">
+                <div>
+                  <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Total Personal Payout</span>
+                  <span className="text-xl font-bold text-white font-mono">${(estContribution * estMembers).toFixed(2)}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-400 uppercase tracking-wider block text-emerald-400">Community Yield Boost</span>
+                  <span className="text-xl font-bold text-emerald-400 font-mono">+${((estContribution * estMembers / 2) * (estApy / 100) * (estMembers / 12)).toFixed(2)}</span>
+                </div>
+                <div className="border-t border-white/5 pt-2">
+                  <span className="text-[9px] text-slate-500 block leading-tight">
+                    Powered by Aave & Paxos yield-generating stablecoins on Robinhood/Arbitrum.
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Active Circles Selector */}
           <div className="space-y-4">
             <h2 className="text-lg font-bold text-white flex items-center">
@@ -690,9 +779,10 @@ export default function Dashboard() {
             )}
           </div>
 
+
           {/* Detailed View of Selected Circle */}
           {activeCircle && (
-            <div className="p-6 rounded-3xl bg-[#111827]/30 border border-white/5 space-y-6">
+            <div className="p-6 rounded-3xl space-y-6 glass-panel">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div className="space-y-1">
                   <span className="text-xs text-slate-400 block uppercase tracking-wider">Active Circle Focus</span>
@@ -744,94 +834,176 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              {/* Circle Details Table */}
-              <div className="space-y-4">
-                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Circle Members & Rotation Status</h3>
-                <div className="border border-white/5 rounded-2xl overflow-hidden bg-[#090D16]/40">
-                  <div className="grid grid-cols-12 gap-4 bg-white/5 px-6 py-3 text-xs text-slate-400 font-medium">
-                    <div className="col-span-4">Member Name</div>
-                    <div className="col-span-3">Smart Wallet</div>
-                    <div className="col-span-2 text-center">Collateral</div>
-                    <div className="col-span-1 text-center font-semibold text-red-400">Missed</div>
-                    <div className="col-span-2 text-right">Pot Status</div>
-                  </div>
+              {/* Split layout: Payout Map and Table */}
+              <div className="grid md:grid-cols-12 gap-6 items-stretch">
+                
+                {/* Left: Circular Visual Payout Map (5 cols) */}
+                <div className="md:col-span-5 p-6 rounded-2xl bg-[#090D16]/60 border border-white/5 flex flex-col items-center justify-center min-h-[320px] relative overflow-hidden glass-panel">
+                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider absolute top-4 left-4">
+                    Payout Rotation Map
+                  </h4>
                   
-                  <div className="divide-y divide-white/5">
-                    {activeCircle.members.map((m, idx) => (
-                      <div key={idx} className="grid grid-cols-12 gap-4 px-6 py-4 text-sm items-center">
-                        <div className="col-span-4 font-semibold text-white flex items-center space-x-2">
-                          <span>
-                            {m.isCurrentUser ? "You" : `Member #${idx + 1}`}
-                          </span>
-                          {m.isCurrentUser && (
-                            <span className="text-[9px] bg-violet-500/20 text-violet-300 border border-violet-500/30 px-1.5 py-0.2 rounded-full">
-                              You
-                            </span>
-                          )}
-                        </div>
-                        <div className="col-span-3 font-mono text-xs text-slate-400">
-                          {m.address.slice(0, 6)}...{m.address.slice(-4)}
-                        </div>
-                        <div className="col-span-2 text-center text-xs font-mono font-semibold text-slate-200">
-                          {m.collateralBalance} {activeCircle.tokenSymbol}
-                        </div>
-                        <div className="col-span-1 text-center text-xs font-mono font-bold text-red-400/80">
-                          {m.missed}
-                        </div>
-                        <div className="col-span-2 text-right">
-                          {m.hasReceived ? (
-                            <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-400/10 text-emerald-400 border border-emerald-400/20">
-                              <CheckCircle className="h-3.5 w-3.5" />
-                              <span>Paid Out</span>
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-white/5 text-slate-400 border border-white/5">
-                              <span>Pending</span>
-                            </span>
-                          )}
-                        </div>
+                  {activeCircle.members.length === 0 ? (
+                    <span className="text-xs text-slate-500">No members in this circle yet.</span>
+                  ) : (
+                    <div className="w-full flex flex-col items-center justify-center pt-6">
+                      <div className="relative w-44 h-44">
+                        <svg viewBox="0 0 220 220" className="w-full h-full">
+                          {/* Inner Dashed Ring */}
+                          <circle cx="110" cy="110" r="70" fill="none" stroke="rgba(255, 255, 255, 0.08)" strokeWidth="2" strokeDasharray="4 4" />
+                          
+                          {/* Center Round Indicator */}
+                          <circle cx="110" cy="110" r="34" fill="#090D16" stroke="rgba(255, 255, 255, 0.08)" strokeWidth="1" />
+                          <text x="110" y="104" textAnchor="middle" fill="rgba(255, 255, 255, 0.4)" fontSize="8" fontWeight="bold" className="uppercase tracking-wider">Round</text>
+                          <text x="110" y="121" textAnchor="middle" fill="#fff" fontSize="16" fontWeight="bold">{activeCircle.round}</text>
+                          
+                          {/* Member Nodes */}
+                          {activeCircle.members.map((m, idx) => {
+                            const total = activeCircle.members.length;
+                            const angle = (idx * 2 * Math.PI) / total - Math.PI / 2;
+                            const x = 110 + 70 * Math.cos(angle);
+                            const y = 110 + 70 * Math.sin(angle);
+                            const isActive = idx === activeCircle.activePayoutIndex;
+                            const isPaid = m.hasReceived;
+                            
+                            let strokeColor = "rgba(255, 255, 255, 0.2)";
+                            let fill = "rgba(17, 24, 39, 0.8)";
+                            let radius = isActive ? 18 : 14;
+                            let pulse = false;
+
+                            if (isActive) {
+                              strokeColor = "#10b981"; // Active emerald green
+                              fill = "rgba(16, 185, 129, 0.15)";
+                              pulse = true;
+                            } else if (isPaid) {
+                              strokeColor = "#059669"; // Paid darker green
+                              fill = "rgba(5, 150, 105, 0.05)";
+                            }
+
+                            return (
+                              <g 
+                                key={idx} 
+                                className="cursor-pointer transition-all duration-200"
+                                onMouseEnter={() => setHoveredMember(idx)}
+                                onMouseLeave={() => setHoveredMember(null)}
+                              >
+                                {pulse && (
+                                  <circle cx={x} cy={y} r={radius + 5} fill="none" stroke="#10b981" strokeWidth="1" className="animate-ping" opacity="0.3" />
+                                )}
+                                <circle 
+                                  cx={x} 
+                                  cy={y} 
+                                  r={radius} 
+                                  fill={fill} 
+                                  stroke={strokeColor} 
+                                  strokeWidth={isActive ? 2 : 1.5} 
+                                />
+                                <text 
+                                  x={x} 
+                                  y={y} 
+                                  textAnchor="middle" 
+                                  dy=".3em" 
+                                  fill={isActive ? "#34d399" : "#fff"} 
+                                  fontSize={isActive ? 9 : 8} 
+                                  fontWeight={isActive ? "bold" : "normal"}
+                                >
+                                  {m.isCurrentUser ? "You" : `#${idx + 1}`}
+                                </text>
+                              </g>
+                            );
+                          })}
+                        </svg>
                       </div>
-                    ))}
+                      
+                      {/* Hover / Active Member details overlay info */}
+                      <div className="mt-4 w-full h-12 flex flex-col items-center justify-center text-center">
+                        {hoveredMember !== null ? (
+                          <>
+                            <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">
+                              {activeCircle.members[hoveredMember].isCurrentUser ? "You" : `Member #${hoveredMember + 1}`} ({activeCircle.members[hoveredMember].address.slice(0, 6)}...{activeCircle.members[hoveredMember].address.slice(-4)})
+                            </span>
+                            <span className="text-xs text-white">
+                              {activeCircle.members[hoveredMember].hasReceived ? (
+                                <span className="text-emerald-400 font-medium">Already paid this cycle</span>
+                              ) : hoveredMember === activeCircle.activePayoutIndex ? (
+                                <span className="text-amber-400 font-semibold">★ Next to receive pot</span>
+                              ) : (
+                                <span className="text-slate-400">Waiting for payout turn</span>
+                              )}
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Hover nodes for details</span>
+                            <span className="text-xs text-slate-400">
+                              Active Recipient: <strong className="text-emerald-400">Member #{activeCircle.activePayoutIndex + 1}</strong>
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Right: Circle Members & Rotation Status (7 cols) */}
+                <div className="md:col-span-7 space-y-4">
+                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                    Circle Members
+                  </h4>
+                  <div className="border border-white/5 rounded-2xl overflow-hidden bg-[#090D16]/40">
+                    <div className="grid grid-cols-12 gap-2 bg-white/5 px-4 py-2.5 text-[10px] text-slate-400 font-semibold uppercase tracking-wider">
+                      <div className="col-span-4">Member</div>
+                      <div className="col-span-3">Wallet</div>
+                      <div className="col-span-2 text-center">Deposit</div>
+                      <div className="col-span-1 text-center text-rose-400">Missed</div>
+                      <div className="col-span-2 text-right">Status</div>
+                    </div>
+                    
+                    <div className="divide-y divide-white/5">
+                      {activeCircle.members.map((m, idx) => (
+                        <div key={idx} className={`grid grid-cols-12 gap-2 px-4 py-3 text-xs items-center transition ${idx === activeCircle.activePayoutIndex ? "bg-emerald-500/5" : ""}`}>
+                          <div className="col-span-4 font-semibold text-white flex items-center space-x-1.5">
+                            <span className="truncate">
+                              {m.isCurrentUser ? "You" : `Member #${idx + 1}`}
+                            </span>
+                            {idx === activeCircle.activePayoutIndex && (
+                              <span className="text-[8px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-1 py-0.2 rounded font-bold uppercase tracking-wide">
+                                Active
+                              </span>
+                            )}
+                          </div>
+                          <div className="col-span-3 font-mono text-[10px] text-slate-400">
+                            {m.address.slice(0, 4)}...{m.address.slice(-4)}
+                          </div>
+                          <div className="col-span-2 text-center font-mono font-medium text-slate-300">
+                            {m.collateralBalance}
+                          </div>
+                          <div className="col-span-1 text-center font-mono font-bold text-rose-400">
+                            {m.missed}
+                          </div>
+                          <div className="col-span-2 text-right">
+                            {m.hasReceived ? (
+                              <span className="inline-flex items-center text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
+                                Paid Out
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center text-[10px] font-semibold text-slate-400 bg-white/5 border border-white/5 px-2 py-0.5 rounded-full">
+                                Pending
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
+
               </div>
             </div>
           )}
-        </div>
-
-        {/* Right Column - Forms & Simulation Console (4 cols) */}
-        <div className="lg:col-span-4 space-y-8">
-          
-          {/* Join Circle */}
-          <div className="p-6 rounded-2xl bg-[#111827]/40 border border-white/5 space-y-4">
-            <h3 className="font-bold text-white flex items-center">
-              <Key className="h-4 w-4 mr-2 text-violet-400" />
-              <span>Join via Invite Code</span>
-            </h3>
-            <form onSubmit={handleJoinCircle} className="space-y-3">
-              <input
-                type="text"
-                value={joinInviteCode}
-                onChange={(e) => setJoinInviteCode(e.target.value)}
-                placeholder="e.g., ROSA-1"
-                className="w-full h-11 px-4 rounded-xl bg-white/5 border border-white/5 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-violet-500/50"
-              />
-              <button
-                type="submit"
-                disabled={isJoining || !joinInviteCode.trim()}
-                className="w-full h-11 bg-violet-600 hover:bg-violet-500 disabled:bg-violet-600/30 disabled:text-slate-500 text-white font-semibold text-sm rounded-xl transition flex items-center justify-center"
-              >
-                {isJoining ? (
-                  <div className="h-4 w-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                ) : (
-                  "Join Circle"
-                )}
-              </button>
-            </form>
-          </div>
 
           {/* Create Circle */}
-          <div className="p-6 rounded-2xl bg-[#111827]/40 border border-white/5 space-y-4">
+          <div className="p-6 rounded-2xl space-y-4 glass-panel">
             <h3 className="font-bold text-white flex items-center">
               <Plus className="h-4 w-4 mr-2 text-violet-400" />
               <span>Deploy New ROSA Circle</span>
@@ -844,7 +1016,7 @@ export default function Dashboard() {
                   value={newCircleName}
                   onChange={(e) => setNewCircleName(e.target.value)}
                   placeholder="e.g., London Devs Circle"
-                  className="w-full h-11 px-4 rounded-xl bg-white/5 border border-white/5 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-violet-500/50"
+                  className="w-full h-11 px-4 rounded-xl bg-white/5 border border-white/5 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-violet-500/50 glow-input"
                 />
               </div>
 
@@ -855,7 +1027,7 @@ export default function Dashboard() {
                   value={customInviteCode}
                   onChange={(e) => setCustomInviteCode(e.target.value.replace(/[^a-zA-Z0-9]/g, "").toUpperCase())}
                   placeholder="e.g., LONDON-DEVS"
-                  className="w-full h-11 px-4 rounded-xl bg-white/5 border border-white/5 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-violet-500/50"
+                  className="w-full h-11 px-4 rounded-xl bg-white/5 border border-white/5 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-violet-500/50 glow-input"
                 />
                 <span className="text-[9px] text-slate-500 mt-1 block">
                   Suffix with circle ID is auto-appended. E.g., LONDON-DEVS-[ID]
@@ -869,7 +1041,7 @@ export default function Dashboard() {
                   value={customTokenAddress}
                   onChange={(e) => setCustomTokenAddress(e.target.value)}
                   placeholder="0x..."
-                  className="w-full h-11 px-4 rounded-xl bg-white/5 border border-white/5 text-white placeholder-slate-500 text-xs focus:outline-none focus:border-violet-500/50 font-mono"
+                  className="w-full h-11 px-4 rounded-xl bg-white/5 border border-white/5 text-white placeholder-slate-500 text-xs focus:outline-none focus:border-violet-500/50 font-mono glow-input"
                 />
                 <span className="text-[9px] text-slate-500 mt-1 block">
                   Defaults to {network.tokenName} on this network.
@@ -886,7 +1058,7 @@ export default function Dashboard() {
                     type="checkbox"
                     checked={requireCollateral}
                     onChange={(e) => setRequireCollateral(e.target.checked)}
-                    className="h-4.5 w-4.5 text-violet-600 focus:ring-violet-500 border-white/10 bg-[#090D16] rounded cursor-pointer"
+                    className="h-4.5 w-4.5 text-violet-600 focus:ring-violet-500 border-white/10 bg-[#030712] rounded cursor-pointer"
                   />
                 </div>
 
@@ -897,7 +1069,7 @@ export default function Dashboard() {
                       type="number"
                       value={collateralAmount}
                       onChange={(e) => setCollateralAmount(Number(e.target.value))}
-                      className="w-full h-11 px-4 rounded-xl bg-white/5 border border-white/5 text-white text-sm focus:outline-none focus:border-violet-500/50"
+                      className="w-full h-11 px-4 rounded-xl bg-white/5 border border-white/5 text-white text-sm focus:outline-none focus:border-violet-500/50 glow-input"
                     />
                   </div>
                 )}
@@ -910,7 +1082,7 @@ export default function Dashboard() {
                     type="number"
                     value={newContribution}
                     onChange={(e) => setNewContribution(Number(e.target.value))}
-                    className="w-full h-11 px-4 rounded-xl bg-white/5 border border-white/5 text-white text-sm focus:outline-none focus:border-violet-500/50"
+                    className="w-full h-11 px-4 rounded-xl bg-white/5 border border-white/5 text-white text-sm focus:outline-none focus:border-violet-500/50 glow-input"
                   />
                 </div>
                 <div>
@@ -918,7 +1090,7 @@ export default function Dashboard() {
                   <select
                     value={newPeriod}
                     onChange={(e) => setNewPeriod(e.target.value)}
-                    className="w-full h-11 px-3 rounded-xl bg-[#090D16] border border-white/5 text-white text-sm focus:outline-none focus:border-violet-500/50"
+                    className="w-full h-11 px-3 rounded-xl bg-[#030712] border border-white/5 text-white text-sm focus:outline-none focus:border-violet-500/50 glow-input"
                   >
                     <option value="60">1 Min (Demo)</option>
                     <option value="300">5 Min (Demo)</option>
@@ -933,7 +1105,7 @@ export default function Dashboard() {
               <button
                 type="submit"
                 disabled={isCreating || !newCircleName.trim()}
-                className="w-full h-11 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 disabled:from-violet-600/30 disabled:to-indigo-600/30 disabled:text-slate-500 text-white font-semibold text-sm rounded-xl shadow-lg shadow-violet-600/15 transition flex items-center justify-center"
+                className="w-full h-11 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 disabled:from-violet-600/30 disabled:to-indigo-600/30 disabled:text-slate-500 text-white font-semibold text-sm rounded-xl shadow-lg shadow-violet-600/15 transition flex items-center justify-center cursor-pointer"
               >
                 {isCreating ? (
                   <div className="h-4 w-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
@@ -945,27 +1117,74 @@ export default function Dashboard() {
           </div>
 
           {/* Simulation / Log Console */}
-          <div className="p-6 rounded-2xl bg-[#111827]/40 border border-white/5 space-y-4">
-            <div className="flex justify-between items-center">
-              <h3 className="font-bold text-white text-xs uppercase tracking-wider flex items-center">
-                <RotateCw className="h-3.5 w-3.5 mr-2 text-emerald-400" />
-                <span>Simulation Console</span>
-              </h3>
+          <div className="rounded-2xl bg-[#030712] border border-white/10 shadow-2xl overflow-hidden glass-panel">
+            {/* Terminal Header */}
+            <div className="flex items-center justify-between px-4 py-3 bg-[#111827]/80 border-b border-white/5">
+              <div className="flex items-center space-x-2">
+                <div className="w-3 h-3 rounded-full bg-rose-500/80" />
+                <div className="w-3 h-3 rounded-full bg-amber-500/80" />
+                <div className="w-3 h-3 rounded-full bg-emerald-500/80" />
+                <span className="text-[10px] font-mono text-slate-500 pl-2">rosa-sh -- smart-wallet-session</span>
+              </div>
               <button 
                 onClick={() => setSimulationLog([])}
-                className="text-[10px] text-slate-500 hover:text-white"
+                className="text-[10px] font-mono text-slate-500 hover:text-slate-200 transition cursor-pointer"
               >
-                Clear
+                clear
               </button>
             </div>
             
-            <div className="h-40 rounded-xl bg-[#090D16] border border-white/5 p-4 overflow-y-auto font-mono text-[11px] space-y-2 text-slate-400">
+            {/* Terminal Body */}
+            <div className="h-48 p-4 overflow-y-auto font-mono text-[11px] space-y-2 text-slate-400 bg-[#030712]/90">
+              <div className="flex items-center space-x-1 text-slate-500 text-[10px] border-b border-white/5 pb-1 mb-2">
+                <span>$</span>
+                <span>tail -f /var/log/rosa/simulation.log</span>
+              </div>
               {simulationLog.length === 0 ? (
-                <div className="text-slate-600 text-center py-12">No simulation events logged yet. Trigger an action to print transaction receipts.</div>
+                <div className="text-slate-600 text-center py-12">
+                  No simulation events logged yet. Trigger an action to print transaction receipts.
+                </div>
               ) : (
                 simulationLog.map((log, i) => (
-                  <div key={i} className="leading-relaxed border-l-2 border-violet-500/50 pl-2">
-                    {log}
+                  <div key={i}>
+                    {(() => {
+                      const timeMatch = log.match(/^\[(.*?)\] (.*)$/);
+                      if (!timeMatch) return <span className="text-slate-300">{log}</span>;
+                      const timestamp = timeMatch[1];
+                      const msg = timeMatch[2];
+                      
+                      let badgeColor = "text-violet-400 border-violet-500/30 bg-violet-500/10";
+                      let msgColor = "text-slate-300";
+                      let tag = "SYSTEM";
+
+                      if (msg.toLowerCase().includes("success") || msg.toLowerCase().includes("succeeded")) {
+                        badgeColor = "text-emerald-400 border-emerald-500/30 bg-emerald-500/10";
+                        msgColor = "text-emerald-300/95";
+                        tag = "SUCCESS";
+                      } else if (msg.toLowerCase().includes("error") || msg.toLowerCase().includes("failed")) {
+                        badgeColor = "text-rose-400 border-rose-500/30 bg-rose-500/10";
+                        msgColor = "text-rose-300/95";
+                        tag = "ERROR";
+                      } else if (msg.toLowerCase().includes("tx sent") || msg.toLowerCase().includes("transaction") || msg.toLowerCase().includes(" tx ")) {
+                        badgeColor = "text-cyan-400 border-cyan-500/30 bg-cyan-500/10";
+                        msgColor = "text-cyan-300/95";
+                        tag = "TX";
+                      } else if (msg.toLowerCase().includes("step")) {
+                        badgeColor = "text-amber-400 border-amber-500/30 bg-amber-500/10";
+                        msgColor = "text-amber-300/95";
+                        tag = "STEP";
+                      }
+
+                      return (
+                        <div className="flex items-start space-x-2 font-mono text-[11px] leading-relaxed">
+                          <span className="text-slate-600 shrink-0 select-none">[{timestamp}]</span>
+                          <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold border ${badgeColor} shrink-0 select-none`}>
+                            {tag}
+                          </span>
+                          <span className={`break-all ${msgColor}`}>{msg}</span>
+                        </div>
+                      );
+                    })()}
                   </div>
                 ))
               )}
