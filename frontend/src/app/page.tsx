@@ -253,7 +253,7 @@ export default function Home() {
       <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] rounded-full bg-[#00C805]/3 blur-[150px] pointer-events-none" />
 
       {/* Header */}
-      <header className="sticky top-0 border-b border-[#303030] bg-[#000000]/80 backdrop-blur-md z-50">
+      <header className="sticky top-0 border-b border-[#303030] bg-[#000000] z-50">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-[#00C805] to-[#00b004] p-[1px]">

@@ -487,7 +487,7 @@ export default function Dashboard() {
       <div className="absolute top-[-10%] right-[-10%] w-[400px] h-[400px] rounded-full bg-[#00C805]/5 blur-[100px] pointer-events-none" />
 
       {/* Header */}
-      <header className="border-b border-[#303030] bg-[#000000]/50 backdrop-blur-md z-10">
+      <header className="sticky top-0 border-b border-[#303030] bg-[#000000] z-50">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <div className="h-9 w-9 rounded-lg bg-gradient-to-tr from-[#00C805] to-[#00b004] p-[1px]">
