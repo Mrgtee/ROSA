@@ -275,10 +275,8 @@ export default function Home() {
       }`}>
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="h-10 w-10 rounded-xl bg-[#00C805] p-[1px]">
-              <div className="h-full w-full bg-[#000000] rounded-[11px] flex items-center justify-center">
-                <Users className="h-5 w-5 text-[#00C805]" />
-              </div>
+            <div className="h-10 w-10 rounded-xl overflow-hidden border border-[#303030]">
+              <img src="/logo.jpg" alt="ROSA Logo" className="h-full w-full object-cover" />
             </div>
             <div>
               <span className="text-xl font-bold tracking-tight text-white">

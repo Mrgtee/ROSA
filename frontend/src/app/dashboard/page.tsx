@@ -509,10 +509,8 @@ export default function Dashboard() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-0 sm:h-20 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center justify-between w-full sm:w-auto">
             <div className="flex items-center space-x-3">
-              <div className="h-9 w-9 rounded-lg bg-[#00C805] p-[1px]">
-                <div className="h-full w-full bg-[#000000] rounded-[7px] flex items-center justify-center">
-                  <Users className="h-4 w-4 text-[#00C805]" />
-                </div>
+              <div className="h-9 w-9 rounded-lg overflow-hidden border border-[#303030]">
+                <img src="/logo.jpg" alt="ROSA Logo" className="h-full w-full object-cover" />
               </div>
               <span className="text-lg font-bold tracking-tight text-white">
                 ROSA Dashboard
