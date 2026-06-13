@@ -709,7 +709,7 @@ export default function Dashboard() {
                     step="10"
                     value={estContribution}
                     onChange={(e) => setEstContribution(Number(e.target.value))}
-                    className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-violet-500"
+                    className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#78D197]"
                   />
                 </div>
 
@@ -725,7 +725,7 @@ export default function Dashboard() {
                     step="1"
                     value={estMembers}
                     onChange={(e) => setEstMembers(Number(e.target.value))}
-                    className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-violet-500"
+                    className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#78D197]"
                   />
                 </div>
 
@@ -741,7 +741,7 @@ export default function Dashboard() {
                     step="0.5"
                     value={estApy}
                     onChange={(e) => setEstApy(Number(e.target.value))}
-                    className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-violet-500"
+                    className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#78D197]"
                   />
                 </div>
               </div>
