@@ -24,7 +24,7 @@ export const ERC20_ABI = parseAbi([
 ]);
 
 // Deployed contract addresses on Robinhood Chain Testnet (Chain ID 46630)
-export const ROBINHOOD_POOL = "0x707fd662f3877be6ea408cebee3156ee7432efc2" as Address;
+export const ROBINHOOD_POOL = "0x49bd8941eeac1fd5b3e002af7dfb537dc7cd8ebf" as Address;
 export const ROBINHOOD_USDG = "0x7E955252E15c84f5768B83c41a71F9eba181802F" as Address;
 
 // Deployed contract addresses on Arbitrum Sepolia (Chain ID 421614)
