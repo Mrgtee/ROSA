@@ -31,7 +31,7 @@ export default function Home() {
   const [simContribution, setSimContribution] = useState(50);
   const [simRound, setSimRound] = useState(4);
   const [simApy, setSimApy] = useState(5.4);
-  const [isAutoStepping, setIsAutoStepping] = useState(false);
+  const [isAutoStepping, setIsAutoStepping] = useState(true);
 
   // Registration states
   const [generatedRecoveryKey, setGeneratedRecoveryKey] = useState("");
@@ -302,9 +302,9 @@ export default function Home() {
           </div>
           
           <h1 className="text-4xl lg:text-6xl font-extrabold tracking-tight leading-tight text-white">
-            Trust-Based Savings.<br />
+            Save and grow <br />
             <span className="bg-gradient-to-r from-emerald-400 to-teal-300 bg-clip-text text-transparent">
-              Secured On-Chain.
+              together
             </span>
           </h1>
           
