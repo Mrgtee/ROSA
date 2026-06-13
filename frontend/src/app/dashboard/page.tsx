@@ -1286,7 +1286,7 @@ export default function Dashboard() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="text-[10px] text-[#8C8C8C] uppercase tracking-wider block mb-1.5 font-semibold">Amount</label>
                   <input
