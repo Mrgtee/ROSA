@@ -32,6 +32,8 @@ sol_storage! {
         uint16 member_count;
         uint16 active_payout_index;
         bool is_active;
+        bool require_collateral;
+        uint256 collateral_amount;
     }
 
     pub struct MemberInfo {
@@ -39,6 +41,7 @@ sol_storage! {
         uint16 missed_payments;
         uint256 yield_earned;
         bool is_member;
+        uint256 collateral_balance;
     }
 }
 
@@ -49,6 +52,7 @@ pub enum RosaError {
     RotationTooEarly,
     EmptyCircle,
     TransferFailed,
+    CannotExit,
 }
 
 impl From<RosaError> for Vec<u8> {
@@ -60,6 +64,7 @@ impl From<RosaError> for Vec<u8> {
             RosaError::RotationTooEarly => b"Rotation period has not passed yet".to_vec(),
             RosaError::EmptyCircle => b"Circle has no members".to_vec(),
             RosaError::TransferFailed => b"Token transfer failed".to_vec(),
+            RosaError::CannotExit => b"Cannot exit after receiving pot until cycle resets".to_vec(),
         }
     }
 }
@@ -75,6 +80,8 @@ impl RosaPool {
         token_address: Address,
         contribution_amount: U256,
         rotation_period: U256,
+        require_collateral: bool,
+        collateral_amount: U256,
     ) -> Result<U256, Vec<u8>> {
         let current_time = self.vm().block_timestamp();
         let current_count = self.circle_count.get();
@@ -92,34 +99,110 @@ impl RosaPool {
         new_circle.member_count.set(U16::from(0));
         new_circle.active_payout_index.set(U16::from(0));
         new_circle.is_active.set(true);
+        new_circle.require_collateral.set(require_collateral);
+        new_circle.collateral_amount.set(collateral_amount);
 
         Ok(next_id)
     }
 
     pub fn join_circle(&mut self, circle_id: U256) -> Result<(), Vec<u8>> {
         let sender = self.vm().msg_sender();
-        let mut circle = self.circles.setter(circle_id);
-        if !circle.is_active.get() {
-            return Err(RosaError::CircleDoesNotExist.into());
+        let (require_collateral, collateral_amount, token_addr) = {
+            let circle = self.circles.getter(circle_id);
+            if !circle.is_active.get() {
+                return Err(RosaError::CircleDoesNotExist.into());
+            }
+            (circle.require_collateral.get(), circle.collateral_amount.get(), circle.token_address.get())
+        };
+
+        let is_already_member = {
+            let circle_info_map = self.circle_member_info.getter(circle_id);
+            let info = circle_info_map.getter(sender);
+            info.is_member.get()
+        };
+        if is_already_member {
+            return Err(RosaError::AlreadyMember.into());
+        }
+
+        // Pull collateral if required
+        if require_collateral && collateral_amount > U256::from(0) {
+            let token = IERC20::new(token_addr);
+            let contract_addr = self.vm().contract_address();
+            let config = Call::new_mutating(self);
+            match token.transfer_from(self.vm(), config, sender, contract_addr, collateral_amount) {
+                Ok(success) => {
+                    if !success {
+                        return Err(RosaError::TransferFailed.into());
+                    }
+                }
+                Err(_) => {
+                    return Err(RosaError::TransferFailed.into());
+                }
+            }
         }
 
         let mut circle_info_map = self.circle_member_info.setter(circle_id);
         let mut member_info = circle_info_map.setter(sender);
-        
-        if member_info.is_member.get() {
-            return Err(RosaError::AlreadyMember.into());
-        }
-
         member_info.is_member.set(true);
         member_info.has_received_pot.set(false);
         member_info.missed_payments.set(U16::from(0));
         member_info.yield_earned.set(U256::from(0));
+        member_info.collateral_balance.set(collateral_amount);
 
+        let mut circle = self.circles.setter(circle_id);
         let current_member_count = circle.member_count.get();
         let mut members_map = self.circle_members.setter(circle_id);
         members_map.setter(current_member_count).set(sender);
         
         circle.member_count.set(current_member_count + U16::from(1));
+
+        Ok(())
+    }
+
+    pub fn exit_circle(&mut self, circle_id: U256) -> Result<(), Vec<u8>> {
+        let sender = self.vm().msg_sender();
+        let (token_addr, is_active) = {
+            let circle = self.circles.getter(circle_id);
+            (circle.token_address.get(), circle.is_active.get())
+        };
+        if !is_active {
+            return Err(RosaError::CircleDoesNotExist.into());
+        }
+
+        let (is_member, has_received_pot, collateral_balance) = {
+            let circle_info_map = self.circle_member_info.getter(circle_id);
+            let info = circle_info_map.getter(sender);
+            (info.is_member.get(), info.has_received_pot.get(), info.collateral_balance.get())
+        };
+        
+        if !is_member {
+            return Err(RosaError::NotMember.into());
+        }
+
+        if has_received_pot {
+            return Err(RosaError::CannotExit.into());
+        }
+
+        // Refund remaining collateral
+        if collateral_balance > U256::from(0) {
+            let token = IERC20::new(token_addr);
+            let config = Call::new_mutating(self);
+            match token.transfer(self.vm(), config, sender, collateral_balance) {
+                Ok(success) => {
+                    if !success {
+                        return Err(RosaError::TransferFailed.into());
+                    }
+                }
+                Err(_) => {
+                    return Err(RosaError::TransferFailed.into());
+                }
+            }
+        }
+
+        let mut circle_info_map = self.circle_member_info.setter(circle_id);
+        let mut info = circle_info_map.setter(sender);
+        info.is_member.set(false);
+        info.collateral_balance.set(U256::from(0));
 
         Ok(())
     }
@@ -174,17 +257,31 @@ impl RosaPool {
                         if success {
                             total_pot += contribution;
                         } else {
+                            // Slash collateral if available to cover default
                             let mut circle_info_map = self.circle_member_info.setter(circle_id);
                             let mut info = circle_info_map.setter(member_addr);
                             let missed = info.missed_payments.get();
                             info.missed_payments.set(missed + U16::from(1));
+
+                            let collateral_bal = info.collateral_balance.get();
+                            if collateral_bal >= contribution {
+                                info.collateral_balance.set(collateral_bal - contribution);
+                                total_pot += contribution;
+                            }
                         }
                     }
                     Err(_) => {
+                        // Slash collateral if available to cover default
                         let mut circle_info_map = self.circle_member_info.setter(circle_id);
                         let mut info = circle_info_map.setter(member_addr);
                         let missed = info.missed_payments.get();
                         info.missed_payments.set(missed + U16::from(1));
+
+                        let collateral_bal = info.collateral_balance.get();
+                        if collateral_bal >= contribution {
+                            info.collateral_balance.set(collateral_bal - contribution);
+                            total_pot += contribution;
+                        }
                     }
                 }
             }
@@ -264,7 +361,7 @@ impl RosaPool {
     pub fn get_circle_details(
         &self,
         circle_id: U256,
-    ) -> Result<(Address, U256, u64, u64, u16, u16, u16, bool), Vec<u8>> {
+    ) -> Result<(Address, U256, u64, u64, u16, u16, u16, bool, bool, U256), Vec<u8>> {
         let circle = self.circles.getter(circle_id);
         if !circle.is_active.get() {
             return Err(RosaError::CircleDoesNotExist.into());
@@ -279,10 +376,12 @@ impl RosaPool {
             circle.member_count.get().to::<u16>(),
             circle.active_payout_index.get().to::<u16>(),
             circle.is_active.get(),
+            circle.require_collateral.get(),
+            circle.collateral_amount.get(),
         ))
     }
 
-    pub fn get_member_info(&self, circle_id: U256, member: Address) -> Result<(bool, u16, U256, bool), Vec<u8>> {
+    pub fn get_member_info(&self, circle_id: U256, member: Address) -> Result<(bool, u16, U256, bool, U256), Vec<u8>> {
         let circle_info_map = self.circle_member_info.getter(circle_id);
         let info = circle_info_map.getter(member);
         Ok((
@@ -290,6 +389,7 @@ impl RosaPool {
             info.missed_payments.get().to::<u16>(),
             info.yield_earned.get(),
             info.is_member.get(),
+            info.collateral_balance.get(),
         ))
     }
 
