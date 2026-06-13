@@ -296,10 +296,7 @@ export default function Home() {
         
         {/* Left Column - Product Explanation */}
         <div className="flex-1 space-y-8 text-center lg:text-left max-w-2xl">
-          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-violet-600/10 border border-violet-500/20 text-[10px] font-semibold text-violet-400 uppercase tracking-wider">
-            <Users className="h-3.5 w-3.5 text-violet-400" />
-            <span>Decentralized Rotating Savings (ROSCAs)</span>
-          </div>
+
           
           <h1 className="text-4xl lg:text-6xl font-extrabold tracking-tight leading-tight text-white">
             Save and grow <br />
@@ -317,24 +314,7 @@ export default function Home() {
             </p>
           </div>
 
-          {/* Key Pillars */}
-          <div className="grid sm:grid-cols-3 gap-4 text-left pt-2">
-            <div className="p-4 rounded-xl bg-white/5 border border-white/5 space-y-2">
-              <ShieldCheck className="h-5 w-5 text-violet-400" />
-              <h4 className="text-xs font-bold text-white uppercase tracking-wider">Security Deposits</h4>
-              <p className="text-[10px] text-slate-500 leading-tight">Collateral backing protects the pool from default losses.</p>
-            </div>
-            <div className="p-4 rounded-xl bg-white/5 border border-white/5 space-y-2">
-              <TrendingUp className="h-5 w-5 text-emerald-400" />
-              <h4 className="text-xs font-bold text-white uppercase tracking-wider">DeFi Yield Boost</h4>
-              <p className="text-[10px] text-slate-500 leading-tight">Idle deposits earn yield, boosting final payout sizes.</p>
-            </div>
-            <div className="p-4 rounded-xl bg-white/5 border border-white/5 space-y-2">
-              <Zap className="h-5 w-5 text-teal-400" />
-              <h4 className="text-xs font-bold text-white uppercase tracking-wider">Auto Direct Debit</h4>
-              <p className="text-[10px] text-slate-500 leading-tight">Session keys automate direct-debit contributions.</p>
-            </div>
-          </div>
+
         </div>
 
         {/* Right Column - Live Savings Circle Visual Preview */}
