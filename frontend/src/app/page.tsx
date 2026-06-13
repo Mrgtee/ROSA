@@ -29,9 +29,9 @@ export default function Home() {
   // Simulator States
   const [simMembers, setSimMembers] = useState(5);
   const [simContribution, setSimContribution] = useState(50);
-  const [simRound, setSimRound] = useState(1);
+  const [simRound, setSimRound] = useState(4);
   const [simApy, setSimApy] = useState(5.4);
-  const [isAutoStepping, setIsAutoStepping] = useState(true);
+  const [isAutoStepping, setIsAutoStepping] = useState(false);
 
   // Registration states
   const [generatedRecoveryKey, setGeneratedRecoveryKey] = useState("");
@@ -339,216 +339,112 @@ export default function Home() {
 
         {/* Right Column - Live Savings Circle Visual Preview */}
         <div className="flex-1 w-full max-w-xl">
-          <div className="p-6 rounded-3xl space-y-6 glass-panel relative overflow-hidden">
-            {/* Visual Header */}
-            <div className="flex justify-between items-center border-b border-white/5 pb-4">
-              <div>
-                <span className="text-[9px] uppercase tracking-wider font-bold text-emerald-400">Live Simulation</span>
-                <h3 className="font-bold text-white text-base">Interactive Rotating Circle</h3>
-              </div>
-              <span className="text-[10px] font-mono text-slate-400 px-2 py-0.5 rounded bg-white/5 border border-white/5">
-                Esusu / Tanda Circle
-              </span>
+          <div className="flex flex-col md:flex-row items-center justify-around gap-8">
+            
+            {/* Circular SVG map */}
+            <div className="relative w-48 h-48 shrink-0">
+              <svg viewBox="0 0 220 220" className="w-full h-full">
+                {/* Rotation Path Ring */}
+                <circle cx="110" cy="110" r="72" fill="none" stroke="rgba(255, 255, 255, 0.08)" strokeWidth="2" strokeDasharray="4 4" />
+                
+                {/* Center Pot Indicator */}
+                <circle cx="110" cy="110" r="36" fill="#030712" stroke="rgba(255, 255, 255, 0.08)" strokeWidth="1" />
+                <text x="110" y="104" textAnchor="middle" fill="rgba(255, 255, 255, 0.4)" fontSize="8" fontWeight="bold" className="uppercase tracking-wider">Total Pot</text>
+                <text x="110" y="121" textAnchor="middle" fill="#34d399" fontSize="15" fontWeight="bold">${totalPot}</text>
+                
+                {/* Line from center pointing to active payout turn */}
+                {(() => {
+                  const angle = ((simRound - 1) * 2 * Math.PI) / simMembers - Math.PI / 2;
+                  const x = 110 + 72 * Math.cos(angle);
+                  const y = 110 + 72 * Math.sin(angle);
+                  return (
+                    <>
+                      <line x1="110" y1="110" x2={x} y2={y} stroke="rgba(16, 185, 129, 0.3)" strokeWidth="1.5" strokeDasharray="3 3" />
+                      <circle cx={x} cy={y} r={20} fill="none" stroke="#10b981" strokeWidth="1" opacity="0.3" />
+                    </>
+                  );
+                })()}
+
+                {/* Render Circle Nodes */}
+                {activePreviewMembers.map((m, idx) => {
+                  const angle = (idx * 2 * Math.PI) / simMembers - Math.PI / 2;
+                  const x = 110 + 72 * Math.cos(angle);
+                  const y = 110 + 72 * Math.sin(angle);
+                  const isActive = idx === simRound - 1;
+                  const isPaid = idx < simRound - 1;
+
+                  let strokeColor = "rgba(255, 255, 255, 0.15)";
+                  let fill = "rgba(17, 24, 39, 0.9)";
+                  let r = isActive ? 18 : 15;
+
+                  if (isActive) {
+                    strokeColor = "#10b981";
+                    fill = "#10b981";
+                  } else if (isPaid) {
+                    strokeColor = "#10b981";
+                    fill = "rgba(16, 185, 129, 0.1)";
+                  }
+
+                  return (
+                    <g key={idx} className="transition-all duration-300">
+                      <circle cx={x} cy={y} r={r} fill={fill} stroke={strokeColor} strokeWidth={isActive ? 2 : 1.5} />
+                      <text x={x} y={y} textAnchor="middle" dy=".3em" fill="#fff" fontSize={isActive ? 11 : 10} fontWeight={isActive ? "bold" : "normal"}>
+                        {m.avatar}
+                      </text>
+                    </g>
+                  );
+                })}
+              </svg>
             </div>
 
-            {/* Circular Animation Area */}
-            <div className="flex flex-col md:flex-row items-center justify-around gap-6">
-              
-              {/* Circular SVG map */}
-              <div className="relative w-48 h-48 shrink-0">
-                <svg viewBox="0 0 220 220" className="w-full h-full">
-                  {/* Rotation Path Ring */}
-                  <circle cx="110" cy="110" r="72" fill="none" stroke="rgba(255, 255, 255, 0.08)" strokeWidth="2" strokeDasharray="4 4" />
-                  
-                  {/* Center Pot Indicator */}
-                  <circle cx="110" cy="110" r="36" fill="#030712" stroke="rgba(255, 255, 255, 0.08)" strokeWidth="1" />
-                  <text x="110" y="104" textAnchor="middle" fill="rgba(255, 255, 255, 0.4)" fontSize="8" fontWeight="bold" className="uppercase tracking-wider">Total Pot</text>
-                  <text x="110" y="121" textAnchor="middle" fill="#34d399" fontSize="15" fontWeight="bold">${totalPot}</text>
-                  
-                  {/* Line from center pointing to active payout turn */}
-                  {(() => {
-                    const angle = ((simRound - 1) * 2 * Math.PI) / simMembers - Math.PI / 2;
-                    const x = 110 + 72 * Math.cos(angle);
-                    const y = 110 + 72 * Math.sin(angle);
-                    return (
-                      <>
-                        <line x1="110" y1="110" x2={x} y2={y} stroke="rgba(16, 185, 129, 0.3)" strokeWidth="1.5" strokeDasharray="3 3" />
-                        <circle cx={x} cy={y} r={20} fill="none" stroke="#10b981" strokeWidth="1" className="animate-ping" opacity="0.3" />
-                      </>
-                    );
-                  })()}
+            {/* Timeline schedule */}
+            <div className="flex-1 w-full space-y-2.5">
+              <span className="text-[11px] uppercase font-bold tracking-wider text-slate-400 block mb-2">Payout Schedule</span>
+              <div className="space-y-2 max-h-[230px] overflow-y-auto pr-1">
+                {activePreviewMembers.map((m, idx) => {
+                  const isPaid = idx < simRound - 1;
+                  const isActive = idx === simRound - 1;
 
-                  {/* Render Circle Nodes */}
-                  {activePreviewMembers.map((m, idx) => {
-                    const angle = (idx * 2 * Math.PI) / simMembers - Math.PI / 2;
-                    const x = 110 + 72 * Math.cos(angle);
-                    const y = 110 + 72 * Math.sin(angle);
-                    const isActive = idx === simRound - 1;
-                    const isPaid = idx < simRound - 1;
-
-                    let strokeColor = "rgba(255, 255, 255, 0.15)";
-                    let fill = "rgba(17, 24, 39, 0.9)";
-                    let r = isActive ? 16 : 13;
-
-                    if (isActive) {
-                      strokeColor = "#10b981";
-                      fill = "rgba(16, 185, 129, 0.15)";
-                    } else if (isPaid) {
-                      strokeColor = "#059669";
-                      fill = "rgba(5, 150, 105, 0.05)";
-                    }
-
-                    return (
-                      <g key={idx} className="transition-all duration-300">
-                        <circle cx={x} cy={y} r={r} fill={fill} stroke={strokeColor} strokeWidth={isActive ? 2 : 1.5} />
-                        <text x={x} y={y} textAnchor="middle" dy=".3em" fill={isActive ? "#34d399" : "#fff"} fontSize={isActive ? 9 : 8} fontWeight={isActive ? "bold" : "normal"}>
-                          {m.avatar}
-                        </text>
-                      </g>
-                    );
-                  })}
-                </svg>
-              </div>
-
-              {/* Timeline schedule */}
-              <div className="flex-1 w-full space-y-2.5">
-                <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500 block">Payout Schedule</span>
-                <div className="space-y-2 max-h-44 overflow-y-auto pr-1">
-                  {activePreviewMembers.map((m, idx) => {
-                    const isPaid = idx < simRound - 1;
-                    const isActive = idx === simRound - 1;
-
-                    return (
-                      <div 
-                        key={idx} 
-                        className={`flex items-center justify-between p-2 rounded-xl border transition duration-300 ${
-                          isActive 
-                            ? "bg-emerald-500/10 border-emerald-500/30 shadow-md" 
-                            : "bg-[#030712]/50 border-white/5"
-                        }`}
-                      >
-                        <div className="flex items-center space-x-2">
-                          <span className={`h-4.5 w-4.5 rounded-full flex items-center justify-center text-[9px] font-bold ${
-                            isPaid 
-                              ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/20" 
-                              : isActive 
-                                ? "bg-emerald-500 text-[#030712]" 
-                                : "bg-white/5 text-slate-500"
-                          }`}>
-                            {idx + 1}
-                          </span>
-                          <span className={`text-[11px] font-medium ${isActive ? "text-white" : "text-slate-400"}`}>
-                            {m.name === "You (Member #1)" ? "You" : m.name.split(" ")[0]}
-                          </span>
-                        </div>
-
-                        <div className="flex items-center space-x-1 text-right">
-                          <span className={`text-[11px] font-mono font-bold ${isActive ? "text-emerald-400" : "text-slate-400"}`}>
-                            +${totalPot}
-                          </span>
-                          {isPaid ? (
-                            <span className="text-[8px] uppercase font-bold text-emerald-500/60 ml-1">Paid</span>
-                          ) : isActive ? (
-                            <span className="text-[8px] uppercase font-bold text-amber-400 ml-1 animate-pulse">Now</span>
-                          ) : (
-                            <span className="text-[8px] uppercase font-bold text-slate-600 ml-1">Wait</span>
-                          )}
-                        </div>
+                  return (
+                    <div 
+                      key={idx} 
+                      className={`flex items-center justify-between p-3.5 rounded-2xl border transition duration-300 ${
+                        isActive 
+                          ? "bg-[#10b981]/10 border-[#10b981]/30 shadow-md" 
+                          : "bg-[#030712]/50 border-white/5"
+                      }`}
+                    >
+                      <div className="flex items-center space-x-3">
+                        <span className={`h-5 w-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                          isPaid 
+                            ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/20" 
+                            : isActive 
+                              ? "bg-emerald-500 text-[#030712]" 
+                              : "bg-white/5 text-slate-500 border border-white/10"
+                        }`}>
+                          {idx + 1}
+                        </span>
+                        <span className={`text-[12px] font-semibold ${isActive ? "text-white" : "text-slate-400"}`}>
+                          {m.name === "You (Member #1)" ? "You" : m.name.split(" ")[0]}
+                        </span>
                       </div>
-                    );
-                  })}
-                </div>
-              </div>
 
-            </div>
-
-            {/* Parameter Sliders */}
-            <div className="grid md:grid-cols-3 gap-4 pt-4 border-t border-white/5 bg-white/2 rounded-2xl p-4">
-              <div>
-                <label className="text-[9px] text-slate-400 uppercase tracking-wider block mb-1">Members: {simMembers}</label>
-                <input
-                  type="range"
-                  min="3"
-                  max="6"
-                  value={simMembers}
-                  onChange={(e) => {
-                    const val = Number(e.target.value);
-                    setSimMembers(val);
-                    if (simRound > val) setSimRound(1);
-                  }}
-                  className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-violet-500"
-                />
+                      <div className="flex items-center space-x-2 text-right">
+                        <span className={`text-[12px] font-mono font-bold ${isActive ? "text-emerald-400" : "text-slate-400"}`}>
+                          +${totalPot}
+                        </span>
+                        {isPaid ? (
+                          <span className="text-[8px] uppercase font-bold text-emerald-500/80 ml-1">Paid</span>
+                        ) : isActive ? (
+                          <span className="text-[8px] uppercase font-bold text-amber-400 ml-1">Now</span>
+                        ) : (
+                          <span className="text-[8px] uppercase font-bold text-slate-600 ml-1">Wait</span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-              <div>
-                <label className="text-[9px] text-slate-400 uppercase tracking-wider block mb-1">Payment: ${simContribution}</label>
-                <input
-                  type="range"
-                  min="10"
-                  max="200"
-                  step="10"
-                  value={simContribution}
-                  onChange={(e) => setSimContribution(Number(e.target.value))}
-                  className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-violet-500"
-                />
-              </div>
-              <div>
-                <label className="text-[9px] text-slate-400 uppercase tracking-wider block mb-1">DeFi APY: {simApy}%</label>
-                <input
-                  type="range"
-                  min="2"
-                  max="12"
-                  step="0.5"
-                  value={simApy}
-                  onChange={(e) => setSimApy(Number(e.target.value))}
-                  className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-violet-500"
-                />
-              </div>
-            </div>
-
-            {/* Calculations Box */}
-            <div className="grid grid-cols-2 gap-4 text-xs p-4 rounded-2xl bg-[#030712]/80 border border-white/5 font-mono">
-              <div>
-                <span className="text-[9px] text-slate-500 block uppercase">Your Turn Payout</span>
-                <span className="text-white font-bold">${totalPot}</span>
-              </div>
-              <div>
-                <span className="text-[9px] text-emerald-400 block uppercase">Est. DeFi Yield Earned</span>
-                <span className="text-emerald-400 font-bold">+${estYield.toFixed(2)}</span>
-              </div>
-            </div>
-
-            {/* Simulation Steps Controls */}
-            <div className="flex justify-between items-center gap-3">
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="auto-step"
-                  checked={isAutoStepping}
-                  onChange={(e) => setIsAutoStepping(e.target.checked)}
-                  className="h-3.5 w-3.5 text-violet-600 focus:ring-violet-500 border-white/10 bg-[#030712] rounded cursor-pointer"
-                />
-                <label htmlFor="auto-step" className="text-[10px] text-slate-400 cursor-pointer">Auto-rotate rounds</label>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setSimRound(prev => (prev % simMembers) + 1)}
-                className="px-3 py-1.5 bg-violet-600 hover:bg-violet-500 text-white rounded-xl font-semibold transition text-[10px] cursor-pointer"
-              >
-                Rotate Round
-              </button>
-            </div>
-
-            {/* Call to Action Button */}
-            <div className="pt-2">
-              <button
-                type="button"
-                onClick={() => setShowAuthModal(true)}
-                className="w-full h-12 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-[#030712] font-extrabold text-sm rounded-2xl shadow-lg shadow-emerald-500/10 transition flex items-center justify-center space-x-2 cursor-pointer"
-              >
-                <span>Deploy / Join a Circle Now</span>
-                <ArrowRight className="h-4 w-4" />
-              </button>
             </div>
 
           </div>
