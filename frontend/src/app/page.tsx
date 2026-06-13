@@ -23,6 +23,9 @@ export default function Home() {
   const [password, setPassword] = useState("");
   const [recoveryKey, setRecoveryKey] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [simMembers, setSimMembers] = useState(5);
+  const [simContribution, setSimContribution] = useState(50);
+  const [simRound, setSimRound] = useState(1);
 
   // Registration states
   const [generatedRecoveryKey, setGeneratedRecoveryKey] = useState("");
@@ -260,10 +263,87 @@ export default function Home() {
           <p className="text-lg text-slate-400 max-w-xl mx-auto lg:mx-0 leading-relaxed">
             ROSA digitizes the global tradition of rotating savings circles (Sou-Sous, Tandas, and Partnerhands) with deterministic smart accounts and yield pools.
           </p>
+
+          {/* Interactive Tanda Simulator */}
+          <div className="mt-8 p-6 rounded-2xl bg-white/5 border border-white/5 space-y-4 max-w-xl mx-auto lg:mx-0 glass-panel">
+            <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center">
+              <Zap className="h-4 w-4 mr-2 text-emerald-400" />
+              <span>Interactive Tanda Simulator</span>
+            </h3>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-[10px] text-slate-400 uppercase tracking-wider block mb-1">Participants: {simMembers}</label>
+                <input
+                  type="range"
+                  min="3"
+                  max="8"
+                  value={simMembers}
+                  onChange={(e) => {
+                    const val = Number(e.target.value);
+                    setSimMembers(val);
+                    if (simRound > val) setSimRound(1);
+                  }}
+                  className="w-full h-1.5 bg-white/5 rounded-lg appearance-none cursor-pointer accent-violet-500"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] text-slate-400 uppercase tracking-wider block mb-1">Contribution: ${simContribution}</label>
+                <input
+                  type="range"
+                  min="10"
+                  max="200"
+                  step="10"
+                  value={simContribution}
+                  onChange={(e) => setSimContribution(Number(e.target.value))}
+                  className="w-full h-1.5 bg-white/5 rounded-lg appearance-none cursor-pointer accent-violet-500"
+                />
+              </div>
+            </div>
+
+            <div className="p-4 rounded-xl bg-[#030712]/60 border border-white/5 space-y-3">
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-slate-400">Total Pot per Rotation:</span>
+                <span className="text-emerald-400 font-bold font-mono">${simMembers * simContribution}</span>
+              </div>
+
+              {/* Visual Ring of Members */}
+              <div className="flex items-center justify-center space-x-2 py-2">
+                {Array.from({ length: simMembers }).map((_, i) => {
+                  const isCurrent = i === simRound - 1;
+                  return (
+                    <div
+                      key={i}
+                      className={`h-7 w-7 rounded-full flex items-center justify-center text-[10px] font-bold transition duration-300 ${
+                        isCurrent
+                          ? "bg-emerald-500 text-[#030712] shadow-lg shadow-emerald-500/30 scale-110 border border-emerald-400"
+                          : "bg-white/5 text-slate-400 border border-white/5"
+                      }`}
+                    >
+                      {i === 0 ? "You" : `#${i + 1}`}
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="flex justify-between items-center text-[11px]">
+                <span className="text-slate-400">
+                  Round {simRound} Payout: <strong className="text-white">{simRound === 1 ? "You receive" : `Member #${simRound} receives`}</strong> the pot!
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setSimRound(prev => (prev % simMembers) + 1)}
+                  className="px-2.5 py-1 bg-violet-600 hover:bg-violet-500 text-white rounded-lg font-semibold transition text-[10px] cursor-pointer"
+                >
+                  Step Round
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Auth Container Card */}
-        <div className="flex-1 w-full max-w-md bg-white/5 border border-white/10 rounded-3xl p-8 backdrop-blur-md relative shadow-2xl overflow-hidden">
+        <div className="flex-1 w-full max-w-md rounded-3xl p-8 relative shadow-2xl overflow-hidden glass-panel">
           {generatedRecoveryKey ? (
             /* Recovery Key Prompt view */
             <div className="space-y-6">
@@ -361,7 +441,7 @@ export default function Home() {
                         placeholder="you@example.com"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="w-full h-11 pl-11 pr-4 rounded-xl bg-white/5 border border-white/5 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-violet-500/50"
+                        className="w-full h-11 pl-11 pr-4 rounded-xl bg-white/5 border border-white/5 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-violet-500/50 glow-input"
                       />
                     </div>
                   </div>
@@ -376,7 +456,7 @@ export default function Home() {
                         placeholder="••••••••"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="w-full h-11 pl-11 pr-4 rounded-xl bg-white/5 border border-white/5 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-violet-500/50"
+                        className="w-full h-11 pl-11 pr-4 rounded-xl bg-white/5 border border-white/5 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-violet-500/50 glow-input"
                       />
                     </div>
                   </div>
@@ -416,7 +496,7 @@ export default function Home() {
                         placeholder="you@example.com"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="w-full h-11 pl-11 pr-4 rounded-xl bg-white/5 border border-white/5 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-violet-500/50"
+                        className="w-full h-11 pl-11 pr-4 rounded-xl bg-white/5 border border-white/5 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-violet-500/50 glow-input"
                       />
                     </div>
                   </div>
@@ -431,7 +511,7 @@ export default function Home() {
                         placeholder="••••••••"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="w-full h-11 pl-11 pr-4 rounded-xl bg-white/5 border border-white/5 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-violet-500/50"
+                        className="w-full h-11 pl-11 pr-4 rounded-xl bg-white/5 border border-white/5 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-violet-500/50 glow-input"
                       />
                     </div>
                   </div>
@@ -462,7 +542,7 @@ export default function Home() {
                         placeholder="you@example.com"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="w-full h-11 pl-11 pr-4 rounded-xl bg-white/5 border border-white/5 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-violet-500/50"
+                        className="w-full h-11 pl-11 pr-4 rounded-xl bg-white/5 border border-white/5 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-violet-500/50 glow-input"
                       />
                     </div>
                   </div>
@@ -477,7 +557,7 @@ export default function Home() {
                         placeholder="ROSA-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX"
                         value={recoveryKey}
                         onChange={(e) => setRecoveryKey(e.target.value)}
-                        className="w-full h-11 pl-11 pr-4 rounded-xl bg-white/5 border border-white/5 text-white placeholder-slate-500 text-xs focus:outline-none focus:border-violet-500/50 font-mono"
+                        className="w-full h-11 pl-11 pr-4 rounded-xl bg-white/5 border border-white/5 text-white placeholder-slate-500 text-xs focus:outline-none focus:border-violet-500/50 font-mono glow-input"
                       />
                     </div>
                   </div>
@@ -492,7 +572,7 @@ export default function Home() {
                         placeholder="••••••••"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="w-full h-11 pl-11 pr-4 rounded-xl bg-white/5 border border-white/5 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-violet-500/50"
+                        className="w-full h-11 pl-11 pr-4 rounded-xl bg-white/5 border border-white/5 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-violet-500/50 glow-input"
                       />
                     </div>
                   </div>
@@ -527,7 +607,7 @@ export default function Home() {
       {/* Features Section */}
       <section className="border-t border-white/5 bg-[#090D16]/30 backdrop-blur-md py-16 z-10">
         <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-          <div className="p-6 rounded-2xl bg-white/5 border border-white/5 hover:border-white/10 transition duration-300">
+          <div className="p-6 rounded-2xl glass-panel glass-panel-hover">
             <Smartphone className="h-8 w-8 text-violet-400 mb-4" />
             <h3 className="text-lg font-bold text-white mb-2">Social / Email Sign-up</h3>
             <p className="text-sm text-slate-400">
@@ -535,7 +615,7 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="p-6 rounded-2xl bg-white/5 border border-white/5 hover:border-white/10 transition duration-300">
+          <div className="p-6 rounded-2xl glass-panel glass-panel-hover">
             <Zap className="h-8 w-8 text-emerald-400 mb-4" />
             <h3 className="text-lg font-bold text-white mb-2">Automated Direct Debit</h3>
             <p className="text-sm text-slate-400">
@@ -543,7 +623,7 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="p-6 rounded-2xl bg-white/5 border border-white/5 hover:border-white/10 transition duration-300">
+          <div className="p-6 rounded-2xl glass-panel glass-panel-hover">
             <TrendingUp className="h-8 w-8 text-teal-400 mb-4" />
             <h3 className="text-lg font-bold text-white mb-2">Yield-Bearing Pools</h3>
             <p className="text-sm text-slate-400">
@@ -551,7 +631,7 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="p-6 rounded-2xl bg-white/5 border border-white/5 hover:border-white/10 transition duration-300">
+          <div className="p-6 rounded-2xl glass-panel glass-panel-hover">
             <ShieldCheck className="h-8 w-8 text-violet-400 mb-4" />
             <h3 className="text-lg font-bold text-white mb-2">Stylus Safety Guard</h3>
             <p className="text-sm text-slate-400">
