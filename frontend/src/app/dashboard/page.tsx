@@ -1042,118 +1042,158 @@ export default function Dashboard() {
             </div>
           )}
 
-          {/* Create Circle */}
-          <div className="p-6 rounded-2xl space-y-4 glass-panel">
-            <h3 className="font-bold text-white flex items-center">
-              <Plus className="h-4 w-4 mr-2 text-[#78D197]" />
-              <span>Deploy New ROSA Circle</span>
-            </h3>
-            <form onSubmit={handleCreateCircle} className="space-y-4">
-              <div>
-                <label className="text-[10px] text-[#8C8C8C] uppercase tracking-wider block mb-1.5">Circle Name</label>
-                <input
-                  type="text"
-                  value={newCircleName}
-                  onChange={(e) => setNewCircleName(e.target.value)}
-                  placeholder="e.g., London Devs Circle"
-                  className="w-full h-11 px-4 rounded-xl bg-[#0A0A0A] border border-[#303030] text-white placeholder-slate-500 text-sm focus:outline-none focus:border-[#78D197]/50 glow-input"
-                />
-              </div>
-
-              <div>
-                <label className="text-[10px] text-[#8C8C8C] uppercase tracking-wider block mb-1.5">Invite Code Prefix</label>
-                <input
-                  type="text"
-                  value={customInviteCode}
-                  onChange={(e) => setCustomInviteCode(e.target.value.replace(/[^a-zA-Z0-9]/g, "").toUpperCase())}
-                  placeholder="e.g., LONDON-DEVS"
-                  className="w-full h-11 px-4 rounded-xl bg-[#0A0A0A] border border-[#303030] text-white placeholder-slate-500 text-sm focus:outline-none focus:border-[#78D197]/50 glow-input"
-                />
-                <span className="text-[9px] text-[#8C8C8C] mt-1 block">
-                  Suffix with circle ID is auto-appended. E.g., LONDON-DEVS-[ID]
-                </span>
-              </div>
-
-              <div>
-                <label className="text-[10px] text-[#8C8C8C] uppercase tracking-wider block mb-1.5 font-semibold">Stablecoin Token Address</label>
-                <input
-                  type="text"
-                  value={customTokenAddress}
-                  onChange={(e) => setCustomTokenAddress(e.target.value)}
-                  placeholder="0x..."
-                  className="w-full h-11 px-4 rounded-xl bg-[#0A0A0A] border border-[#303030] text-white placeholder-slate-500 text-xs focus:outline-none focus:border-[#78D197]/50 font-mono glow-input"
-                />
-                <span className="text-[9px] text-[#8C8C8C] mt-1 block">
-                  Defaults to {network.tokenName} on this network.
-                </span>
-              </div>
-
-              <div className="p-4 rounded-xl bg-[#0A0A0A] border border-[#303030] space-y-4">
-                <div className="flex items-center justify-between">
+          {/* Join & Create Circles Grid */}
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* Join Circle */}
+            <div className="p-6 rounded-2xl space-y-4 glass-panel flex flex-col justify-between">
+              <div className="space-y-4">
+                <h3 className="font-bold text-white flex items-center">
+                  <Users className="h-4 w-4 mr-2 text-[#78D197]" />
+                  <span>Join Savings Circle</span>
+                </h3>
+                <p className="text-xs text-[#8C8C8C]">
+                  Enter an invite code to join an existing savings group on the blockchain (e.g. ROSA-1).
+                </p>
+                <form onSubmit={handleJoinCircle} className="space-y-4">
                   <div>
-                    <label className="text-xs text-white font-semibold block">Require Collateral</label>
-                    <span className="text-[9px] text-[#8C8C8C] block">Enforce safety deposits to cover defaults.</span>
+                    <label className="text-[10px] text-[#8C8C8C] uppercase tracking-wider block mb-1.5 font-semibold">Invite Code</label>
+                    <input
+                      type="text"
+                      value={joinInviteCode}
+                      onChange={(e) => setJoinInviteCode(e.target.value)}
+                      placeholder="e.g., ROSA-1"
+                      className="w-full h-11 px-4 rounded-xl bg-[#0A0A0A] border border-[#303030] text-white placeholder-slate-500 text-sm focus:outline-none focus:border-[#78D197]/50 glow-input font-mono"
+                      required
+                    />
                   </div>
+                  <button
+                    type="submit"
+                    disabled={isJoining || !joinInviteCode.trim()}
+                    className="w-full h-11 bg-[#CCFF00] hover:bg-[#b3e600] disabled:opacity-50 text-[#000000] font-extrabold text-sm rounded-xl transition flex items-center justify-center cursor-pointer active:scale-95 transition-transform duration-100"
+                  >
+                    {isJoining ? (
+                      <div className="h-4 w-4 border-2 border-[#303030] border-t-black rounded-full animate-spin" />
+                    ) : (
+                      "Join Circle"
+                    )}
+                  </button>
+                </form>
+              </div>
+            </div>
+
+            {/* Create Circle */}
+            <div className="p-6 rounded-2xl space-y-4 glass-panel">
+              <h3 className="font-bold text-white flex items-center">
+                <Plus className="h-4 w-4 mr-2 text-[#78D197]" />
+                <span>Deploy New ROSA Circle</span>
+              </h3>
+              <form onSubmit={handleCreateCircle} className="space-y-4">
+                <div>
+                  <label className="text-[10px] text-[#8C8C8C] uppercase tracking-wider block mb-1.5">Circle Name</label>
                   <input
-                    type="checkbox"
-                    checked={requireCollateral}
-                    onChange={(e) => setRequireCollateral(e.target.checked)}
-                    className="h-4.5 w-4.5 text-[#78D197] focus:ring-violet-500 border-[#303030] bg-[#000000] rounded cursor-pointer"
+                    type="text"
+                    value={newCircleName}
+                    onChange={(e) => setNewCircleName(e.target.value)}
+                    placeholder="e.g., London Devs Circle"
+                    className="w-full h-11 px-4 rounded-xl bg-[#0A0A0A] border border-[#303030] text-white placeholder-slate-500 text-sm focus:outline-none focus:border-[#78D197]/50 glow-input"
                   />
                 </div>
 
-                {requireCollateral && (
+                <div>
+                  <label className="text-[10px] text-[#8C8C8C] uppercase tracking-wider block mb-1.5">Invite Code Prefix</label>
+                  <input
+                    type="text"
+                    value={customInviteCode}
+                    onChange={(e) => setCustomInviteCode(e.target.value.replace(/[^a-zA-Z0-9]/g, "").toUpperCase())}
+                    placeholder="e.g., LONDON-DEVS"
+                    className="w-full h-11 px-4 rounded-xl bg-[#0A0A0A] border border-[#303030] text-white placeholder-slate-500 text-sm focus:outline-none focus:border-[#78D197]/50 glow-input"
+                  />
+                  <span className="text-[9px] text-[#8C8C8C] mt-1 block">
+                    Suffix with circle ID is auto-appended. E.g., LONDON-DEVS-[ID]
+                  </span>
+                </div>
+
+                <div>
+                  <label className="text-[10px] text-[#8C8C8C] uppercase tracking-wider block mb-1.5 font-semibold">Stablecoin Token Address</label>
+                  <input
+                    type="text"
+                    value={customTokenAddress}
+                    onChange={(e) => setCustomTokenAddress(e.target.value)}
+                    placeholder="0x..."
+                    className="w-full h-11 px-4 rounded-xl bg-[#0A0A0A] border border-[#303030] text-white placeholder-slate-500 text-xs focus:outline-none focus:border-[#78D197]/50 font-mono glow-input"
+                  />
+                  <span className="text-[9px] text-[#8C8C8C] mt-1 block">
+                    Defaults to {network.tokenName} on this network.
+                  </span>
+                </div>
+
+                <div className="p-4 rounded-xl bg-[#0A0A0A] border border-[#303030] space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <label className="text-xs text-white font-semibold block">Require Collateral</label>
+                      <span className="text-[9px] text-[#8C8C8C] block">Enforce safety deposits to cover defaults.</span>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={requireCollateral}
+                      onChange={(e) => setRequireCollateral(e.target.checked)}
+                      className="h-4.5 w-4.5 text-[#78D197] focus:ring-violet-500 border-[#303030] bg-[#000000] rounded cursor-pointer"
+                    />
+                  </div>
+
+                  {requireCollateral && (
+                    <div>
+                      <label className="text-[10px] text-[#8C8C8C] uppercase tracking-wider block mb-1.5 font-semibold">Collateral Amount ({network.tokenSymbol})</label>
+                      <input
+                        type="number"
+                        value={collateralAmount}
+                        onChange={(e) => setCollateralAmount(Number(e.target.value))}
+                        className="w-full h-11 px-4 rounded-xl bg-[#0A0A0A] border border-[#303030] text-white text-sm focus:outline-none focus:border-[#78D197]/50 glow-input"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-[10px] text-[#8C8C8C] uppercase tracking-wider block mb-1.5 font-semibold">Collateral Amount ({network.tokenSymbol})</label>
+                    <label className="text-[10px] text-[#8C8C8C] uppercase tracking-wider block mb-1.5 font-semibold">Contribution</label>
                     <input
                       type="number"
-                      value={collateralAmount}
-                      onChange={(e) => setCollateralAmount(Number(e.target.value))}
+                      value={newContribution}
+                      onChange={(e) => setNewContribution(Number(e.target.value))}
                       className="w-full h-11 px-4 rounded-xl bg-[#0A0A0A] border border-[#303030] text-white text-sm focus:outline-none focus:border-[#78D197]/50 glow-input"
                     />
                   </div>
-                )}
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-[10px] text-[#8C8C8C] uppercase tracking-wider block mb-1.5 font-semibold">Contribution</label>
-                  <input
-                    type="number"
-                    value={newContribution}
-                    onChange={(e) => setNewContribution(Number(e.target.value))}
-                    className="w-full h-11 px-4 rounded-xl bg-[#0A0A0A] border border-[#303030] text-white text-sm focus:outline-none focus:border-[#78D197]/50 glow-input"
-                  />
+                  <div>
+                    <label className="text-[10px] text-[#8C8C8C] uppercase tracking-wider block mb-1.5">Frequency</label>
+                    <select
+                      value={newPeriod}
+                      onChange={(e) => setNewPeriod(e.target.value)}
+                      className="w-full h-11 px-3 rounded-xl bg-[#000000] border border-[#303030] text-white text-sm focus:outline-none focus:border-[#78D197]/50 glow-input"
+                    >
+                      <option value="60">1 Min (Demo)</option>
+                      <option value="300">5 Min (Demo)</option>
+                      <option value="3600">Hourly</option>
+                      <option value="86400">Daily</option>
+                      <option value="604800">Weekly</option>
+                      <option value="2592000">Monthly</option>
+                    </select>
+                  </div>
                 </div>
-                <div>
-                  <label className="text-[10px] text-[#8C8C8C] uppercase tracking-wider block mb-1.5">Frequency</label>
-                  <select
-                    value={newPeriod}
-                    onChange={(e) => setNewPeriod(e.target.value)}
-                    className="w-full h-11 px-3 rounded-xl bg-[#000000] border border-[#303030] text-white text-sm focus:outline-none focus:border-[#78D197]/50 glow-input"
-                  >
-                    <option value="60">1 Min (Demo)</option>
-                    <option value="300">5 Min (Demo)</option>
-                    <option value="3600">Hourly</option>
-                    <option value="86400">Daily</option>
-                    <option value="604800">Weekly</option>
-                    <option value="2592000">Monthly</option>
-                  </select>
-                </div>
-              </div>
 
-              <button
-                type="submit"
-                disabled={isCreating || !newCircleName.trim()}
-                className="w-full h-11 bg-[#CCFF00] hover:bg-[#b3e600] disabled:opacity-50 text-[#000000] font-extrabold text-sm rounded-xl transition flex items-center justify-center cursor-pointer active:scale-95 transition-transform duration-100"
-              >
-                {isCreating ? (
-                  <div className="h-4 w-4 border-2 border-[#303030] border-t-black rounded-full animate-spin" />
-                ) : (
-                  "Deploy Circle"
-                )}
-              </button>
-            </form>
+                <button
+                  type="submit"
+                  disabled={isCreating || !newCircleName.trim()}
+                  className="w-full h-11 bg-[#CCFF00] hover:bg-[#b3e600] disabled:opacity-50 text-[#000000] font-extrabold text-sm rounded-xl transition flex items-center justify-center cursor-pointer active:scale-95 transition-transform duration-100"
+                >
+                  {isCreating ? (
+                    <div className="h-4 w-4 border-2 border-[#303030] border-t-black rounded-full animate-spin" />
+                  ) : (
+                    "Deploy Circle"
+                  )}
+                </button>
+              </form>
+            </div>
           </div>
 
           {/* Simulation / Log Console */}
