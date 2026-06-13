@@ -421,13 +421,13 @@ export default function Home() {
                         }`}>
                           {idx + 1}
                         </span>
-                        <span className={`text-[12px] font-semibold ${isActive ? "text-white" : "text-[#8C8C8C]"}`}>
+                        <span className="text-[12px] font-semibold text-white">
                           {m.name === "You (Member #1)" ? "You" : m.name.split(" ")[0]}
                         </span>
                       </div>
 
                       <div className="flex items-center space-x-2 text-right">
-                        <span className={`text-[12px] font-mono font-bold ${isActive ? "text-[#78D197]" : "text-[#8C8C8C]"}`}>
+                        <span className={`text-[12px] font-mono font-bold ${isActive ? "text-[#78D197]" : "text-white"}`}>
                           +${totalPot}
                         </span>
                         {isPaid ? (
