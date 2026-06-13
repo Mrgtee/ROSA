@@ -270,8 +270,8 @@ export default function Home() {
   return (
     <div className="flex-1 flex flex-col relative bg-[#000000]">
       {/* Header */}
-      <header className={`sticky top-0 border-b border-[#303030] bg-[#000000] z-50 transition-transform duration-300 ${
-        showHeader ? "translate-y-0" : "-translate-y-full"
+      <header className={`sticky top-0 border-b border-[#303030] bg-[#000000] z-50 transition-all duration-500 ease-in-out ${
+        showHeader ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0 pointer-events-none"
       }`}>
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center space-x-3">
@@ -569,7 +569,7 @@ export default function Home() {
                 <button
                   onClick={proceedToDashboard}
                   disabled={!hasConfirmedSave}
-                  className="w-full h-11 bg-[#CCFF00] hover:bg-[#b3e600] disabled:bg-[#CCFF00]/30 text-[#000000] font-extrabold text-sm rounded-xl transition flex items-center justify-center cursor-pointer active:scale-95 transition-transform duration-100"
+                  className="w-full h-11 bg-[#CCFF00] hover:bg-[#b3e600] disabled:opacity-50 text-[#000000] font-extrabold text-sm rounded-xl transition flex items-center justify-center cursor-pointer active:scale-95 transition-transform duration-100"
                 >
                   Proceed to Dashboard
                 </button>
@@ -633,7 +633,7 @@ export default function Home() {
                     <button
                       type="submit"
                       disabled={isLoading}
-                      className="w-full h-11 bg-[#CCFF00] hover:bg-[#b3e600] disabled:bg-[#CCFF00]/30 text-[#000000] font-extrabold text-sm rounded-xl transition flex items-center justify-center cursor-pointer active:scale-95 transition-transform duration-100"
+                      className="w-full h-11 bg-[#CCFF00] hover:bg-[#b3e600] disabled:opacity-50 text-[#000000] font-extrabold text-sm rounded-xl transition flex items-center justify-center cursor-pointer active:scale-95 transition-transform duration-100"
                     >
                       {isLoading ? (
                         <div className="h-4 w-4 border-2 border-[#030712]/20 border-t-[#030712] rounded-full animate-spin" />
@@ -688,7 +688,7 @@ export default function Home() {
                     <button
                       type="submit"
                       disabled={isLoading}
-                      className="w-full h-11 bg-[#CCFF00] hover:bg-[#b3e600] disabled:bg-[#CCFF00]/30 text-[#000000] font-extrabold text-sm rounded-xl transition flex items-center justify-center cursor-pointer active:scale-95 transition-transform duration-100"
+                      className="w-full h-11 bg-[#CCFF00] hover:bg-[#b3e600] disabled:opacity-50 text-[#000000] font-extrabold text-sm rounded-xl transition flex items-center justify-center cursor-pointer active:scale-95 transition-transform duration-100"
                     >
                       {isLoading ? (
                         <div className="h-4 w-4 border-2 border-[#030712]/20 border-t-[#030712] rounded-full animate-spin" />
@@ -749,7 +749,7 @@ export default function Home() {
                     <button
                       type="submit"
                       disabled={isLoading}
-                      className="w-full h-11 bg-[#CCFF00] hover:bg-[#b3e600] disabled:bg-[#CCFF00]/30 text-[#000000] font-extrabold text-sm rounded-xl transition flex items-center justify-center cursor-pointer active:scale-95 transition-transform duration-100"
+                      className="w-full h-11 bg-[#CCFF00] hover:bg-[#b3e600] disabled:opacity-50 text-[#000000] font-extrabold text-sm rounded-xl transition flex items-center justify-center cursor-pointer active:scale-95 transition-transform duration-100"
                     >
                       {isLoading ? (
                         <div className="h-4 w-4 border-2 border-[#030712]/20 border-t-[#030712] rounded-full animate-spin" />

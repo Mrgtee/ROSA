@@ -503,8 +503,8 @@ export default function Dashboard() {
   return (
     <div className="flex-1 flex flex-col bg-[#000000] relative">
       {/* Header */}
-      <header className={`sticky top-0 border-b border-[#303030] bg-[#000000] z-50 transition-transform duration-300 ${
-        showHeader ? "translate-y-0" : "-translate-y-full"
+      <header className={`sticky top-0 border-b border-[#303030] bg-[#000000] z-50 transition-all duration-500 ease-in-out ${
+        showHeader ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0 pointer-events-none"
       }`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-0 sm:h-20 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center justify-between w-full sm:w-auto">
@@ -546,31 +546,31 @@ export default function Dashboard() {
                 setCircles([]);
                 setSelectedCircleId("");
               }}
-              className="h-9 px-3 rounded-xl bg-[#0A0A0A]/80 border border-[#303030] text-xs font-semibold text-slate-200 focus:outline-none focus:border-[#00C805]/50 w-full sm:w-auto"
+              className="h-9 px-3 rounded-xl bg-[#CCFF00] hover:bg-[#b3e600] border border-[#CCFF00] text-xs font-extrabold text-[#000000] focus:outline-none w-full sm:w-auto transition active:scale-95 transition-transform duration-100"
             >
-              <option value={46630}>Robinhood Chain Testnet</option>
-              <option value={421614}>Arbitrum Sepolia</option>
+              <option value={46630} className="bg-[#000000] text-white">Robinhood Chain Testnet</option>
+              <option value={421614} className="bg-[#000000] text-white">Arbitrum Sepolia</option>
             </select>
 
             {userEmail && (
-              <span className="hidden md:inline-block text-xs font-semibold text-[#00C805] border border-[#00C805]/20 px-3 py-1.5 rounded-xl bg-[#00C805]/5">
+              <span className="hidden md:inline-block text-xs font-extrabold text-[#000000] px-3 py-1.5 rounded-xl bg-[#CCFF00]">
                 {userEmail}
               </span>
             )}
             
             <button
               onClick={handleCopyAddress}
-              className="flex items-center space-x-2 border border-[#303030] px-3 py-1.5 rounded-xl bg-[#0A0A0A] hover:bg-white/10 hover:border-[#303030] transition cursor-pointer text-left focus:outline-none active:scale-95 transition-transform duration-100 text-xs font-mono text-slate-300 w-auto"
+              className="flex items-center space-x-2 border border-[#CCFF00] px-3 py-1.5 rounded-xl bg-[#CCFF00] hover:bg-[#b3e600] transition cursor-pointer text-left focus:outline-none active:scale-95 transition-transform duration-100 text-xs font-mono text-[#000000] font-extrabold w-auto"
               title="Copy Smart Wallet Address"
             >
-              <Wallet className="h-4 w-4 text-[#00C805]" />
+              <Wallet className="h-4 w-4 text-[#000000]" />
               <span>
                 {userAddress ? `${userAddress.slice(0, 6)}...${userAddress.slice(-4)}` : "Loading..."}
               </span>
               {copiedAddress ? (
-                <Check className="h-3.5 w-3.5 text-[#00C805] shrink-0 ml-1" />
+                <Check className="h-3.5 w-3.5 text-[#000000] shrink-0 ml-1" />
               ) : (
-                <Copy className="h-3.5 w-3.5 text-[#8C8C8C] shrink-0 ml-1" />
+                <Copy className="h-3.5 w-3.5 text-[#000000] shrink-0 ml-1" />
               )}
             </button>
             
@@ -581,10 +581,10 @@ export default function Dashboard() {
                 setWithdrawTokenAddress(conf.tokenAddress);
                 setShowWithdrawModal(true);
               }}
-              className="flex items-center space-x-1.5 border border-red-500/20 px-3 py-1.5 rounded-xl bg-red-500/5 hover:bg-red-500/10 hover:border-red-500/35 transition cursor-pointer text-xs font-semibold text-red-400 focus:outline-none w-auto"
+              className="flex items-center space-x-1.5 border border-[#CCFF00] px-3 py-1.5 rounded-xl bg-[#CCFF00] hover:bg-[#b3e600] transition cursor-pointer text-xs font-extrabold text-[#000000] focus:outline-none w-auto active:scale-95 transition-transform duration-100"
               title="Withdraw Tokens"
             >
-              <LogOut className="h-3.5 w-3.5 rotate-180 text-red-400" />
+              <LogOut className="h-3.5 w-3.5 rotate-180 text-[#000000]" />
               <span>Withdraw</span>
             </button>
 
@@ -630,7 +630,7 @@ export default function Dashboard() {
                   href="https://faucet.testnet.chain.robinhood.com"
                   target="_blank"
                   rel="noreferrer"
-                  className="px-3 py-1.5 bg-[#0A0A0A] hover:bg-white/10 text-slate-300 border border-[#303030] rounded-xl text-xs font-semibold transition"
+                  className="px-3 py-1.5 bg-[#CCFF00] hover:bg-[#b3e600] text-[#000000] border border-[#CCFF00] rounded-xl text-xs font-extrabold transition active:scale-95 transition-transform duration-100"
                   title="Official Robinhood Faucet (ETH + Stock Tokens)"
                 >
                   Robinhood Faucet
@@ -639,7 +639,7 @@ export default function Dashboard() {
                   href="https://faucet.paxos.com/?network=robinhood"
                   target="_blank"
                   rel="noreferrer"
-                  className="px-3 py-1.5 bg-[#0A0A0A] hover:bg-white/10 text-slate-300 border border-[#303030] rounded-xl text-xs font-semibold transition"
+                  className="px-3 py-1.5 bg-[#CCFF00] hover:bg-[#b3e600] text-[#000000] border border-[#CCFF00] rounded-xl text-xs font-extrabold transition active:scale-95 transition-transform duration-100"
                   title="Paxos USDG Faucet (100 USDG per request)"
                 >
                   Paxos USDG Faucet
@@ -650,7 +650,7 @@ export default function Dashboard() {
                 href="https://faucet.circle.com"
                 target="_blank"
                 rel="noreferrer"
-                className="px-3 py-1.5 bg-[#0A0A0A] hover:bg-white/10 text-slate-300 border border-[#303030] rounded-xl text-xs font-semibold transition"
+                className="px-3 py-1.5 bg-[#CCFF00] hover:bg-[#b3e600] text-[#000000] border border-[#CCFF00] rounded-xl text-xs font-extrabold transition active:scale-95 transition-transform duration-100"
                 title="Circle USDC Faucet"
               >
                 Circle USDC Faucet
@@ -862,7 +862,7 @@ export default function Dashboard() {
                   <button
                     onClick={handleTriggerRotation}
                     disabled={isRotating || activeCircle.members.length === 0}
-                    className="px-4 py-2 bg-[#CCFF00] hover:bg-[#b3e600] disabled:bg-[#CCFF00]/30 disabled:text-[#8C8C8C]/50 text-[#000000] font-bold text-xs rounded-xl flex items-center space-x-1.5 shadow-md transition cursor-pointer active:scale-95 transition-transform duration-100"
+                    className="px-4 py-2 bg-[#CCFF00] hover:bg-[#b3e600] disabled:opacity-50 text-[#000000] font-bold text-xs rounded-xl flex items-center space-x-1.5 shadow-md transition cursor-pointer active:scale-95 transition-transform duration-100"
                   >
                     {isRotating ? (
                       <div className="h-3 w-3 border-2 border-[#303030]/20 border-t-black rounded-full animate-spin" />
@@ -1147,7 +1147,7 @@ export default function Dashboard() {
               <button
                 type="submit"
                 disabled={isCreating || !newCircleName.trim()}
-                className="w-full h-11 bg-[#CCFF00] hover:bg-[#b3e600] disabled:bg-[#CCFF00]/30 disabled:text-[#8C8C8C]/50 text-[#000000] font-extrabold text-sm rounded-xl shadow-lg shadow-emerald-500/10 transition flex items-center justify-center cursor-pointer active:scale-95 transition-transform duration-100"
+                className="w-full h-11 bg-[#CCFF00] hover:bg-[#b3e600] disabled:opacity-50 text-[#000000] font-extrabold text-sm rounded-xl shadow-lg shadow-emerald-500/10 transition flex items-center justify-center cursor-pointer active:scale-95 transition-transform duration-100"
               >
                 {isCreating ? (
                   <div className="h-4 w-4 border-2 border-[#303030] border-t-black rounded-full animate-spin" />
@@ -1312,7 +1312,7 @@ export default function Dashboard() {
               <button
                 type="submit"
                 disabled={isWithdrawing || !withdrawRecipient.trim()}
-                className="w-full h-11 bg-[#CCFF00] hover:bg-[#b3e600] disabled:bg-[#CCFF00]/30 disabled:text-[#8C8C8C]/50 text-[#000000] font-extrabold text-sm rounded-xl shadow-lg shadow-emerald-500/10 transition flex items-center justify-center cursor-pointer active:scale-95 transition-transform duration-100"
+                className="w-full h-11 bg-[#CCFF00] hover:bg-[#b3e600] disabled:opacity-50 text-[#000000] font-extrabold text-sm rounded-xl shadow-lg shadow-emerald-500/10 transition flex items-center justify-center cursor-pointer active:scale-95 transition-transform duration-100"
               >
                 {isWithdrawing ? (
                   <div className="h-4 w-4 border-2 border-[#303030] border-t-black rounded-full animate-spin" />
