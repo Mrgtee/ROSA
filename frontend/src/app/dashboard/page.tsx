@@ -73,9 +73,6 @@ export default function Dashboard() {
   const [collateralAmount, setCollateralAmount] = useState<number>(10);
   const [isExiting, setIsExiting] = useState<boolean>(false);
   const [hoveredMember, setHoveredMember] = useState<number | null>(null);
-  const [estContribution, setEstContribution] = useState<number>(50);
-  const [estMembers, setEstMembers] = useState<number>(6);
-  const [estApy, setEstApy] = useState<number>(5.5);
 
   // Scroll visibility states for header auto-hide
   const [showHeader, setShowHeader] = useState(true);
@@ -680,88 +677,6 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Yield Estimator Card */}
-          <div className="p-6 rounded-3xl space-y-6 glass-panel">
-            <div>
-              <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center">
-                <TrendingUp className="h-4 w-4 mr-2 text-[#00C805]" />
-                <span>Yield Estimator & Savings Boost</span>
-              </h3>
-              <p className="text-xs text-[#8C8C8C] mt-1">
-                See how rotating community savings earn real yield compared to keeping cash at home.
-              </p>
-            </div>
-
-            <div className="grid md:grid-cols-3 gap-6">
-              {/* Sliders */}
-              <div className="md:col-span-2 space-y-4">
-                <div>
-                  <div className="flex justify-between text-xs mb-1.5">
-                    <span className="text-[#8C8C8C]">Contribution per Period:</span>
-                    <span className="text-white font-semibold font-mono">${estContribution}</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="10"
-                    max="1000"
-                    step="10"
-                    value={estContribution}
-                    onChange={(e) => setEstContribution(Number(e.target.value))}
-                    className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#78D197]"
-                  />
-                </div>
-
-                <div>
-                  <div className="flex justify-between text-xs mb-1.5">
-                    <span className="text-[#8C8C8C]">Circle Size (Members):</span>
-                    <span className="text-white font-semibold font-mono">{estMembers} members</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="3"
-                    max="12"
-                    step="1"
-                    value={estMembers}
-                    onChange={(e) => setEstMembers(Number(e.target.value))}
-                    className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#78D197]"
-                  />
-                </div>
-
-                <div>
-                  <div className="flex justify-between text-xs mb-1.5">
-                    <span className="text-[#8C8C8C]">DeFi APY Rate:</span>
-                    <span className="text-white font-semibold font-mono">{estApy}%</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="2"
-                    max="15"
-                    step="0.5"
-                    value={estApy}
-                    onChange={(e) => setEstApy(Number(e.target.value))}
-                    className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#78D197]"
-                  />
-                </div>
-              </div>
-
-              {/* Outputs */}
-              <div className="p-4 rounded-2xl bg-[#0A0A0A] border border-[#303030] flex flex-col justify-between space-y-4">
-                <div>
-                  <span className="text-[10px] text-[#8C8C8C] uppercase tracking-wider block">Total Personal Payout</span>
-                  <span className="text-xl font-bold text-white font-mono">${(estContribution * estMembers).toFixed(2)}</span>
-                </div>
-                <div>
-                  <span className="text-[10px] text-[#8C8C8C] uppercase tracking-wider block text-[#00C805]">Community Yield Boost</span>
-                  <span className="text-xl font-bold text-[#00C805] font-mono">+${((estContribution * estMembers / 2) * (estApy / 100) * (estMembers / 12)).toFixed(2)}</span>
-                </div>
-                <div className="border-t border-[#303030] pt-2">
-                  <span className="text-[9px] text-[#8C8C8C] block leading-tight">
-                    Powered by Aave & Paxos yield-generating stablecoins on Robinhood/Arbitrum.
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
 
           {/* Active Circles Selector */}
           <div className="space-y-4">
