@@ -60,6 +60,8 @@ export default function Dashboard() {
   const [withdrawAmount, setWithdrawAmount] = useState(10);
   const [withdrawTokenAddress, setWithdrawTokenAddress] = useState("");
   const [isWithdrawing, setIsWithdrawing] = useState(false);
+  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+  const [withdrawChainId, setWithdrawChainId] = useState<number>(46630);
 
   // UI state
   const [simulationLog, setSimulationLog] = useState<string[]>([]);
@@ -110,6 +112,7 @@ export default function Dashboard() {
   useEffect(() => {
     setCustomTokenAddress(network.tokenAddress);
     setWithdrawTokenAddress(network.tokenAddress);
+    setWithdrawChainId(selectedChainId);
   }, [selectedChainId]);
 
   // Fetch balances and circles
@@ -139,11 +142,27 @@ export default function Dashboard() {
 
       // Fetch ROSA circles for this chain
       const onChainCircles = await fetchOnChainCircles(selectedChainId, userAddress);
-      setCircles(onChainCircles);
+
+      // Load deployed circles from localStorage for filtering
+      let deployedIds: string[] = [];
+      try {
+        const deployedMap = JSON.parse(localStorage.getItem("rosa_deployed_circles") || "{}");
+        deployedIds = deployedMap[selectedChainId] || [];
+      } catch (err) {
+        console.error("Error reading deployed circles registry:", err);
+      }
+
+      const filteredCircles = onChainCircles.filter(c => {
+        const isMember = c.members.some(m => m.address.toLowerCase() === userAddress.toLowerCase());
+        const isDeployedByMe = deployedIds.includes(c.id);
+        return isMember || isDeployedByMe;
+      });
+
+      setCircles(filteredCircles);
       
       // Auto-select first circle if none selected
-      if (onChainCircles.length > 0) {
-        setSelectedCircleId(onChainCircles[0].id);
+      if (filteredCircles.length > 0) {
+        setSelectedCircleId(filteredCircles[0].id);
       } else {
         setSelectedCircleId("");
       }
@@ -293,6 +312,14 @@ export default function Dashboard() {
       inviteCodeMap[`${selectedChainId}_${newCircleId}`] = prefix;
       localStorage.setItem("rosa_circle_invite_codes", JSON.stringify(inviteCodeMap));
 
+      // Save deployed circle ID to localStorage for filtering
+      const deployedMap = JSON.parse(localStorage.getItem("rosa_deployed_circles") || "{}");
+      if (!deployedMap[selectedChainId]) {
+        deployedMap[selectedChainId] = [];
+      }
+      deployedMap[selectedChainId].push(newCircleId.toString());
+      localStorage.setItem("rosa_deployed_circles", JSON.stringify(deployedMap));
+
       logSim(`Circle #${newCircleId} created with invite code: ${prefix}-${newCircleId}`);
       setNewCircleName("");
       setCustomInviteCode("");
@@ -311,18 +338,19 @@ export default function Dashboard() {
     if (!withdrawRecipient.trim() || !userAddress || !privateKey) return;
 
     setIsWithdrawing(true);
-    logSim(`Initiating token withdrawal to ${withdrawRecipient}...`);
+    const withdrawNetwork = getNetworkConfig(withdrawChainId);
+    logSim(`Initiating token withdrawal on ${withdrawNetwork.chain.name} to ${withdrawRecipient}...`);
 
     try {
-      const client = getPublicClient(selectedChainId);
+      const client = getPublicClient(withdrawChainId);
       const account = privateKeyToAccount(privateKey as Address);
       const walletClient = createWalletClient({
         account,
-        chain: network.chain,
+        chain: withdrawNetwork.chain,
         transport: http(),
       });
 
-      const tokenToWithdraw = (withdrawTokenAddress.trim() || network.tokenAddress) as Address;
+      const tokenToWithdraw = (withdrawTokenAddress.trim() || withdrawNetwork.tokenAddress) as Address;
       const decimals = 6; // Assume 6 decimals for USDG / USDC (default)
       const amountUnits = parseUnits(withdrawAmount.toString(), decimals);
 
@@ -340,6 +368,7 @@ export default function Dashboard() {
       logSim(`Withdrawal successful! Transferred ${withdrawAmount} tokens.`);
 
       setWithdrawRecipient("");
+      setShowWithdrawModal(false);
       await refreshOnChainData();
     } catch (err: any) {
       logSim(`Withdrawal failed: ${err.message}`);
@@ -443,6 +472,19 @@ export default function Dashboard() {
               ) : (
                 <Copy className="h-3.5 w-3.5 text-slate-500 shrink-0 ml-1" />
               )}
+            </button>
+            <button
+              onClick={() => {
+                setWithdrawChainId(selectedChainId);
+                const conf = getNetworkConfig(selectedChainId);
+                setWithdrawTokenAddress(conf.tokenAddress);
+                setShowWithdrawModal(true);
+              }}
+              className="flex items-center space-x-1.5 border border-red-500/20 px-3 py-1.5 rounded-xl bg-red-500/5 hover:bg-red-500/10 hover:border-red-500/35 transition cursor-pointer text-xs font-semibold text-red-400 focus:outline-none"
+              title="Withdraw Tokens"
+            >
+              <LogOut className="h-3.5 w-3.5 rotate-180 text-red-400" />
+              <span>Withdraw</span>
             </button>
             <button
               onClick={refreshOnChainData}
@@ -788,62 +830,6 @@ export default function Dashboard() {
             </form>
           </div>
 
-          {/* Withdraw / Transfer Tokens */}
-          <div className="p-6 rounded-2xl bg-[#111827]/40 border border-white/5 space-y-4">
-            <h3 className="font-bold text-white flex items-center">
-              <LogOut className="h-4 w-4 mr-2 text-violet-400 rotate-180" />
-              <span>Withdraw / Transfer Tokens</span>
-            </h3>
-            <form onSubmit={handleWithdraw} className="space-y-4">
-              <div>
-                <label className="text-[10px] text-slate-400 uppercase tracking-wider block mb-1.5">Recipient Wallet Address</label>
-                <input
-                  type="text"
-                  value={withdrawRecipient}
-                  onChange={(e) => setWithdrawRecipient(e.target.value)}
-                  placeholder="0x..."
-                  required
-                  className="w-full h-11 px-4 rounded-xl bg-white/5 border border-white/5 text-white placeholder-slate-500 text-xs focus:outline-none focus:border-violet-500/50 font-mono"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-[10px] text-slate-400 uppercase tracking-wider block mb-1.5">Amount</label>
-                  <input
-                    type="number"
-                    value={withdrawAmount}
-                    onChange={(e) => setWithdrawAmount(Number(e.target.value))}
-                    required
-                    className="w-full h-11 px-4 rounded-xl bg-white/5 border border-white/5 text-white text-sm focus:outline-none focus:border-violet-500/50"
-                  />
-                </div>
-                <div>
-                  <label className="text-[10px] text-slate-400 uppercase tracking-wider block mb-1.5">Token Address</label>
-                  <input
-                    type="text"
-                    value={withdrawTokenAddress}
-                    onChange={(e) => setWithdrawTokenAddress(e.target.value)}
-                    placeholder="0x..."
-                    className="w-full h-11 px-4 rounded-xl bg-white/5 border border-white/5 text-white placeholder-slate-500 text-xs focus:outline-none focus:border-violet-500/50 font-mono"
-                  />
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={isWithdrawing || !withdrawRecipient.trim()}
-                className="w-full h-11 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 disabled:from-red-600/30 disabled:to-rose-600/30 disabled:text-slate-500 text-white font-semibold text-sm rounded-xl shadow-lg shadow-red-600/15 transition flex items-center justify-center"
-              >
-                {isWithdrawing ? (
-                  <div className="h-4 w-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                ) : (
-                  "Withdraw Tokens"
-                )}
-              </button>
-            </form>
-          </div>
-
           {/* Simulation / Log Console */}
           <div className="p-6 rounded-2xl bg-[#111827]/40 border border-white/5 space-y-4">
             <div className="flex justify-between items-center">
@@ -875,6 +861,97 @@ export default function Dashboard() {
         </div>
 
       </div>
+
+      {/* Withdraw Modal Overlay */}
+      {showWithdrawModal && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="w-full max-w-md bg-[#111827] border border-white/10 rounded-3xl p-6 relative shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-150">
+            <button
+              onClick={() => setShowWithdrawModal(false)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-white text-xl font-bold cursor-pointer"
+            >
+              &times;
+            </button>
+            
+            <div>
+              <h3 className="font-bold text-white text-lg flex items-center">
+                <LogOut className="h-5 w-5 mr-2 text-red-400 rotate-180" />
+                <span>Withdraw / Transfer Tokens</span>
+              </h3>
+              <p className="text-[10px] text-slate-400 mt-1">
+                Withdraw stablecoins or custom tokens from your Smart Wallet to another recipient.
+              </p>
+            </div>
+
+            <form onSubmit={handleWithdraw} className="space-y-4">
+              {/* Network Selection */}
+              <div>
+                <label className="text-[10px] text-slate-400 uppercase tracking-wider block mb-1.5 font-semibold">Preferred Network</label>
+                <select
+                  value={withdrawChainId}
+                  onChange={(e) => {
+                    const chainIdVal = Number(e.target.value);
+                    setWithdrawChainId(chainIdVal);
+                    const conf = getNetworkConfig(chainIdVal);
+                    setWithdrawTokenAddress(conf.tokenAddress);
+                  }}
+                  className="w-full h-11 px-3 rounded-xl bg-[#090D16] border border-white/10 text-white text-xs focus:outline-none focus:border-violet-500/50"
+                >
+                  <option value={46630}>Robinhood Chain Testnet (USDG)</option>
+                  <option value={421614}>Arbitrum Sepolia (USDC)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-[10px] text-slate-400 uppercase tracking-wider block mb-1.5 font-semibold">Recipient Wallet Address</label>
+                <input
+                  type="text"
+                  value={withdrawRecipient}
+                  onChange={(e) => setWithdrawRecipient(e.target.value)}
+                  placeholder="0x..."
+                  required
+                  className="w-full h-11 px-4 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 text-xs focus:outline-none focus:border-violet-500/50 font-mono"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[10px] text-slate-400 uppercase tracking-wider block mb-1.5 font-semibold">Amount</label>
+                  <input
+                    type="number"
+                    value={withdrawAmount}
+                    onChange={(e) => setWithdrawAmount(Number(e.target.value))}
+                    required
+                    className="w-full h-11 px-4 rounded-xl bg-white/5 border border-white/10 text-white text-xs focus:outline-none focus:border-violet-500/50"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] text-slate-400 uppercase tracking-wider block mb-1.5 font-semibold">Token Address</label>
+                  <input
+                    type="text"
+                    value={withdrawTokenAddress}
+                    onChange={(e) => setWithdrawTokenAddress(e.target.value)}
+                    placeholder="0x..."
+                    className="w-full h-11 px-4 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 text-xs focus:outline-none focus:border-violet-500/50 font-mono"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isWithdrawing || !withdrawRecipient.trim()}
+                className="w-full h-11 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 disabled:from-red-600/30 disabled:to-rose-600/30 disabled:text-slate-500 text-white font-semibold text-sm rounded-xl shadow-lg shadow-red-600/15 transition flex items-center justify-center cursor-pointer"
+              >
+                {isWithdrawing ? (
+                  <div className="h-4 w-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                ) : (
+                  "Withdraw Tokens"
+                )}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

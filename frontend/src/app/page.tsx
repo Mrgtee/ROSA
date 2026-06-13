@@ -63,6 +63,27 @@ export default function Home() {
     setIsLoading(true);
     try {
       const encoder = new TextEncoder();
+      
+      // Hash the password for verification
+      const passwordData = encoder.encode(password.trim() + "rosa-verify-salt");
+      const passwordHashBuffer = await window.crypto.subtle.digest("SHA-256", passwordData);
+      const passwordHashHex = Array.from(new Uint8Array(passwordHashBuffer)).map(b => b.toString(16).padStart(2, "0")).join("");
+
+      const registry = JSON.parse(localStorage.getItem("rosa_user_auth_registry") || "{}");
+      const existingRecord = registry[email.trim().toLowerCase()];
+
+      if (existingRecord) {
+        if (existingRecord.passwordHash !== passwordHashHex) {
+          alert("Incorrect password for this email address.");
+          setIsLoading(false);
+          return;
+        }
+      } else {
+        // First login on this browser/device for this email: save it in registry to lock it
+        registry[email.trim().toLowerCase()] = { passwordHash: passwordHashHex };
+        localStorage.setItem("rosa_user_auth_registry", JSON.stringify(registry));
+      }
+
       const combinedData = encoder.encode(
         email.trim().toLowerCase() + 
         password.trim() + 
@@ -96,7 +117,25 @@ export default function Home() {
 
     setIsLoading(true);
     try {
+      const registry = JSON.parse(localStorage.getItem("rosa_user_auth_registry") || "{}");
+      const existingRecord = registry[email.trim().toLowerCase()];
+
+      if (existingRecord) {
+        alert("This email address is already registered. Please Sign In instead.");
+        setIsLoading(false);
+        return;
+      }
+
       const encoder = new TextEncoder();
+      
+      // Save password hash
+      const passwordData = encoder.encode(password.trim() + "rosa-verify-salt");
+      const passwordHashBuffer = await window.crypto.subtle.digest("SHA-256", passwordData);
+      const passwordHashHex = Array.from(new Uint8Array(passwordHashBuffer)).map(b => b.toString(16).padStart(2, "0")).join("");
+
+      registry[email.trim().toLowerCase()] = { passwordHash: passwordHashHex };
+      localStorage.setItem("rosa_user_auth_registry", JSON.stringify(registry));
+
       const combinedData = encoder.encode(
         email.trim().toLowerCase() + 
         password.trim() + 
@@ -125,8 +164,8 @@ export default function Home() {
   // Recover: Restores account using Email + Recovery Key
   const handleRecover = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim() || !recoveryKey.trim()) {
-      alert("Please enter both email and recovery key.");
+    if (!email.trim() || !recoveryKey.trim() || !password.trim()) {
+      alert("Please enter email, recovery key, and a new password.");
       return;
     }
 
@@ -143,6 +182,16 @@ export default function Home() {
       }
 
       const privateKey = decodeRecoveryKey(cleanKey);
+
+      // Register/Update the password hash locally for this email
+      const encoder = new TextEncoder();
+      const passwordData = encoder.encode(password.trim() + "rosa-verify-salt");
+      const passwordHashBuffer = await window.crypto.subtle.digest("SHA-256", passwordData);
+      const passwordHashHex = Array.from(new Uint8Array(passwordHashBuffer)).map(b => b.toString(16).padStart(2, "0")).join("");
+
+      const registry = JSON.parse(localStorage.getItem("rosa_user_auth_registry") || "{}");
+      registry[email.trim().toLowerCase()] = { passwordHash: passwordHashHex };
+      localStorage.setItem("rosa_user_auth_registry", JSON.stringify(registry));
 
       // Store private key and email
       localStorage.setItem("rosa_demo_key", privateKey);
@@ -429,6 +478,21 @@ export default function Home() {
                         value={recoveryKey}
                         onChange={(e) => setRecoveryKey(e.target.value)}
                         className="w-full h-11 pl-11 pr-4 rounded-xl bg-white/5 border border-white/5 text-white placeholder-slate-500 text-xs focus:outline-none focus:border-violet-500/50 font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] text-slate-400 uppercase tracking-wider block">Set New Password for this device</label>
+                    <div className="relative">
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                      <input
+                        type="password"
+                        required
+                        placeholder="••••••••"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="w-full h-11 pl-11 pr-4 rounded-xl bg-white/5 border border-white/5 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-violet-500/50"
                       />
                     </div>
                   </div>
