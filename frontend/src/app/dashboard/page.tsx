@@ -546,31 +546,31 @@ export default function Dashboard() {
                 setCircles([]);
                 setSelectedCircleId("");
               }}
-              className="h-9 px-3 rounded-xl bg-[#CCFF00] hover:bg-[#b3e600] border border-[#CCFF00] text-xs font-extrabold text-[#000000] focus:outline-none w-full sm:w-auto transition active:scale-95 transition-transform duration-100"
+              className="h-9 px-3 rounded-xl bg-transparent border border-[#303030] hover:border-[#78D197]/40 text-xs font-semibold text-white focus:outline-none w-full sm:w-auto transition active:scale-95 transition-transform duration-100"
             >
               <option value={46630} className="bg-[#000000] text-white">Robinhood Chain Testnet</option>
               <option value={421614} className="bg-[#000000] text-white">Arbitrum Sepolia</option>
             </select>
 
             {userEmail && (
-              <span className="hidden md:inline-block text-xs font-extrabold text-[#000000] px-3 py-1.5 rounded-xl bg-[#CCFF00]">
+              <span className="hidden md:inline-block text-xs font-semibold text-slate-300 px-3 py-1.5 rounded-xl bg-transparent border border-[#303030]">
                 {userEmail}
               </span>
             )}
             
             <button
               onClick={handleCopyAddress}
-              className="flex items-center space-x-2 border border-[#CCFF00] px-3 py-1.5 rounded-xl bg-[#CCFF00] hover:bg-[#b3e600] transition cursor-pointer text-left focus:outline-none active:scale-95 transition-transform duration-100 text-xs font-mono text-[#000000] font-extrabold w-auto"
+              className="flex items-center space-x-2 border border-[#303030] hover:border-[#78D197]/40 px-3 py-1.5 rounded-xl bg-transparent transition cursor-pointer text-left focus:outline-none active:scale-95 transition-transform duration-100 text-xs font-mono text-slate-300 w-auto"
               title="Copy Smart Wallet Address"
             >
-              <Wallet className="h-4 w-4 text-[#000000]" />
+              <Wallet className="h-4 w-4 text-slate-400" />
               <span>
                 {userAddress ? `${userAddress.slice(0, 6)}...${userAddress.slice(-4)}` : "Loading..."}
               </span>
               {copiedAddress ? (
-                <Check className="h-3.5 w-3.5 text-[#000000] shrink-0 ml-1" />
+                <Check className="h-3.5 w-3.5 text-[#78D197] shrink-0 ml-1" />
               ) : (
-                <Copy className="h-3.5 w-3.5 text-[#000000] shrink-0 ml-1" />
+                <Copy className="h-3.5 w-3.5 text-slate-400 shrink-0 ml-1" />
               )}
             </button>
             
@@ -581,7 +581,7 @@ export default function Dashboard() {
                 setWithdrawTokenAddress(conf.tokenAddress);
                 setShowWithdrawModal(true);
               }}
-              className="flex items-center space-x-1.5 border border-[#CCFF00] px-3 py-1.5 rounded-xl bg-[#CCFF00] hover:bg-[#b3e600] transition cursor-pointer text-xs font-extrabold text-[#000000] focus:outline-none w-auto active:scale-95 transition-transform duration-100"
+              className="flex items-center space-x-1.5 border border-[#00C805] px-3 py-1.5 rounded-xl bg-[#00C805] hover:bg-[#00b004] transition cursor-pointer text-xs font-extrabold text-[#000000] focus:outline-none w-auto active:scale-95 transition-transform duration-100"
               title="Withdraw Tokens"
             >
               <LogOut className="h-3.5 w-3.5 rotate-180 text-[#000000]" />

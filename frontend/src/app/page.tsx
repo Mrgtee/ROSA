@@ -293,7 +293,7 @@ export default function Home() {
             {isLoggedIn ? (
               <Link
                 href="/dashboard"
-                className="px-4 py-2 bg-[#CCFF00] hover:bg-[#b3e600] text-[#000000] font-extrabold text-xs rounded-xl transition flex items-center space-x-1.5 active:scale-95 transition-transform duration-100"
+                className="px-4 py-2 bg-[#00C805] hover:bg-[#00b004] text-[#000000] font-extrabold text-xs rounded-xl transition flex items-center space-x-1.5 active:scale-95 transition-transform duration-100"
               >
                 <span>Dashboard</span>
                 <ArrowRight className="h-3.5 w-3.5" />
