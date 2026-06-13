@@ -476,6 +476,284 @@ export default function Home() {
           <span>ROSA is built for the Robinhood Chain Hackathon, integrating ZeroDev AA and Arbitrum Stylus.</span>
         </div>
       </div>
+
+      {/* Auth Modal Overlay */}
+      {showAuthModal && (
+        <div className="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center z-50 p-4">
+          <div className="relative w-full max-w-md bg-[#090D16] border border-white/10 rounded-3xl p-8 shadow-2xl space-y-6">
+            {/* Close button */}
+            <button
+              onClick={() => {
+                setShowAuthModal(false);
+                setGeneratedRecoveryKey("");
+                setHasConfirmedSave(false);
+              }}
+              className="absolute top-4 right-4 text-slate-400 hover:text-white transition"
+            >
+              <span className="sr-only">Close</span>
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            {generatedRecoveryKey ? (
+              // Recovery Key Presentation screen (after register)
+              <div className="space-y-6">
+                <div className="text-center space-y-2">
+                  <div className="h-12 w-12 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto">
+                    <ShieldCheck className="h-6 w-6 text-emerald-400" />
+                  </div>
+                  <h3 className="text-lg font-bold text-white">Save Your Recovery Key</h3>
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    ROSA uses non-custodial smart accounts. This key is the only way to recover your wallet if you forget your password.
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-white/5 border border-white/5 space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-[10px] uppercase font-bold text-emerald-400">Secret Recovery Key</span>
+                    <button
+                      onClick={handleCopyKey}
+                      className="text-[10px] text-violet-400 hover:text-violet-300 font-semibold flex items-center space-x-1"
+                    >
+                      {copiedKey ? (
+                        <>
+                          <Check className="h-3 w-3" />
+                          <span>Copied</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="h-3 w-3" />
+                          <span>Copy Key</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                  <div className="p-3 bg-[#030712] rounded-xl border border-white/5 font-mono text-xs text-center text-white break-all select-all select-none selection:bg-violet-600/30">
+                    {generatedRecoveryKey}
+                  </div>
+                </div>
+
+                <div className="flex items-start space-x-2.5">
+                  <input
+                    type="checkbox"
+                    id="confirm-save"
+                    checked={hasConfirmedSave}
+                    onChange={(e) => setHasConfirmedSave(e.target.checked)}
+                    className="mt-0.5 h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-white/10 bg-[#030712] rounded cursor-pointer"
+                  />
+                  <label htmlFor="confirm-save" className="text-xs text-slate-400 select-none cursor-pointer">
+                    I have saved my secret recovery key and understand that it cannot be recovered if lost.
+                  </label>
+                </div>
+
+                <button
+                  onClick={proceedToDashboard}
+                  disabled={!hasConfirmedSave}
+                  className="w-full h-11 bg-emerald-500 hover:bg-emerald-400 disabled:bg-emerald-500/30 text-[#030712] font-extrabold text-sm rounded-xl transition flex items-center justify-center cursor-pointer"
+                >
+                  Proceed to Dashboard
+                </button>
+              </div>
+            ) : (
+              // Standard auth form (Sign In, Register, Recover tabs)
+              <div className="space-y-6">
+                <div className="flex border-b border-white/5 pb-1">
+                  {(["signin", "register", "recover"] as const).map((tab) => (
+                    <button
+                      key={tab}
+                      onClick={() => {
+                        setActiveTab(tab);
+                        setEmail("");
+                        setPassword("");
+                        setRecoveryKey("");
+                      }}
+                      className={`flex-1 pb-3 text-xs font-bold uppercase tracking-wider transition ${
+                        activeTab === tab
+                          ? "text-emerald-400 border-b-2 border-emerald-400"
+                          : "text-slate-500 hover:text-slate-400"
+                      }`}
+                    >
+                      {tab === "signin" ? "Sign In" : tab === "register" ? "Register" : "Recover"}
+                    </button>
+                  ))}
+                </div>
+
+                {activeTab === "signin" && (
+                  <form onSubmit={handleSignIn} className="space-y-4">
+                    <div className="space-y-2">
+                      <label className="text-[10px] text-slate-400 uppercase tracking-wider block">Email Address</label>
+                      <div className="relative">
+                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                        <input
+                          type="email"
+                          required
+                          placeholder="you@example.com"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          className="w-full h-11 pl-11 pr-4 rounded-xl bg-white/5 border border-white/5 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-violet-500/50 glow-input"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-[10px] text-slate-400 uppercase tracking-wider block">Password</label>
+                      <div className="relative">
+                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                        <input
+                          type="password"
+                          required
+                          placeholder="••••••••"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          className="w-full h-11 pl-11 pr-4 rounded-xl bg-white/5 border border-white/5 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-violet-500/50 glow-input"
+                        />
+                      </div>
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={isLoading}
+                      className="w-full h-11 bg-emerald-500 hover:bg-emerald-400 disabled:bg-emerald-500/30 text-[#030712] font-extrabold text-sm rounded-xl transition flex items-center justify-center cursor-pointer"
+                    >
+                      {isLoading ? (
+                        <div className="h-4 w-4 border-2 border-[#030712]/20 border-t-[#030712] rounded-full animate-spin" />
+                      ) : (
+                        "Sign In"
+                      )}
+                    </button>
+                    <div className="text-center">
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab("recover")}
+                        className="text-xs text-emerald-400 hover:underline"
+                      >
+                        Forgot password? Sign in with Recovery Key
+                      </button>
+                    </div>
+                  </form>
+                )}
+
+                {activeTab === "register" && (
+                  <form onSubmit={handleRegister} className="space-y-4">
+                    <div className="space-y-2">
+                      <label className="text-[10px] text-slate-400 uppercase tracking-wider block">Email Address</label>
+                      <div className="relative">
+                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                        <input
+                          type="email"
+                          required
+                          placeholder="you@example.com"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          className="w-full h-11 pl-11 pr-4 rounded-xl bg-white/5 border border-white/5 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-violet-500/50 glow-input"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-[10px] text-slate-400 uppercase tracking-wider block">Password</label>
+                      <div className="relative">
+                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                        <input
+                          type="password"
+                          required
+                          placeholder="••••••••"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          className="w-full h-11 pl-11 pr-4 rounded-xl bg-white/5 border border-white/5 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-violet-500/50 glow-input"
+                        />
+                      </div>
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={isLoading}
+                      className="w-full h-11 bg-emerald-500 hover:bg-emerald-400 disabled:bg-emerald-500/30 text-[#030712] font-extrabold text-sm rounded-xl transition flex items-center justify-center cursor-pointer"
+                    >
+                      {isLoading ? (
+                        <div className="h-4 w-4 border-2 border-[#030712]/20 border-t-[#030712] rounded-full animate-spin" />
+                      ) : (
+                        "Register & Create Wallet"
+                      )}
+                    </button>
+                  </form>
+                )}
+
+                {activeTab === "recover" && (
+                  <form onSubmit={handleRecover} className="space-y-4">
+                    <div className="space-y-2">
+                      <label className="text-[10px] text-slate-400 uppercase tracking-wider block">Email Address</label>
+                      <div className="relative">
+                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                        <input
+                          type="email"
+                          required
+                          placeholder="you@example.com"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          className="w-full h-11 pl-11 pr-4 rounded-xl bg-white/5 border border-white/5 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-violet-500/50 glow-input"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-[10px] text-slate-400 uppercase tracking-wider block">Secret Recovery Key</label>
+                      <div className="relative">
+                        <Key className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                        <input
+                          type="text"
+                          required
+                          placeholder="ROSA-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX"
+                          value={recoveryKey}
+                          onChange={(e) => setRecoveryKey(e.target.value)}
+                          className="w-full h-11 pl-11 pr-4 rounded-xl bg-white/5 border border-white/5 text-white placeholder-slate-500 text-xs focus:outline-none focus:border-violet-500/50 font-mono glow-input"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-[10px] text-slate-400 uppercase tracking-wider block">Set New Password for this device</label>
+                      <div className="relative">
+                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                        <input
+                          type="password"
+                          required
+                          placeholder="••••••••"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          className="w-full h-11 pl-11 pr-4 rounded-xl bg-white/5 border border-white/5 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-violet-500/50 glow-input"
+                        />
+                      </div>
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={isLoading}
+                      className="w-full h-11 bg-emerald-500 hover:bg-emerald-400 disabled:bg-emerald-500/30 text-[#030712] font-extrabold text-sm rounded-xl transition flex items-center justify-center cursor-pointer"
+                    >
+                      {isLoading ? (
+                        <div className="h-4 w-4 border-2 border-[#030712]/20 border-t-[#030712] rounded-full animate-spin" />
+                      ) : (
+                        "Recover & Sign In"
+                      )}
+                    </button>
+                    <div className="text-center">
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab("signin")}
+                        className="text-xs text-emerald-400 hover:underline"
+                      >
+                        Back to Sign In
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
