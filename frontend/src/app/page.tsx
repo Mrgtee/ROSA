@@ -48,6 +48,27 @@ export default function Home() {
     }
   }, []);
 
+  // Scroll visibility states for header auto-hide
+  const [showHeader, setShowHeader] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      if (currentScrollY > lastScrollY && currentScrollY > 80) {
+        // scrolling down -> hide header
+        setShowHeader(false);
+      } else {
+        // scrolling up -> show header
+        setShowHeader(true);
+      }
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [lastScrollY]);
+
   // Auto step rotation simulation for dynamic visuals
   useEffect(() => {
     if (!isAutoStepping) return;
@@ -248,23 +269,19 @@ export default function Home() {
 
   return (
     <div className="flex-1 flex flex-col relative bg-[#000000]">
-      {/* Background glow effects */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
-        <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-[#00C805]/5 blur-[120px]" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] rounded-full bg-[#00C805]/3 blur-[150px]" />
-      </div>
-
       {/* Header */}
-      <header className="sticky top-0 border-b border-[#303030] bg-[#000000] z-50">
+      <header className={`sticky top-0 border-b border-[#303030] bg-[#000000] z-50 transition-transform duration-300 ${
+        showHeader ? "translate-y-0" : "-translate-y-full"
+      }`}>
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-[#00C805] to-[#00b004] p-[1px]">
+            <div className="h-10 w-10 rounded-xl bg-[#00C805] p-[1px]">
               <div className="h-full w-full bg-[#000000] rounded-[11px] flex items-center justify-center">
                 <Users className="h-5 w-5 text-[#00C805]" />
               </div>
             </div>
             <div>
-              <span className="text-xl font-bold tracking-tight bg-gradient-to-r from-white to-[#8C8C8C] bg-clip-text text-transparent">
+              <span className="text-xl font-bold tracking-tight text-white">
                 ROSA
               </span>
               <span className="ml-2.5 px-2 py-0.5 text-[9px] font-semibold text-[#00C805] bg-[#00C805]/10 rounded-full border border-[#00C805]/20 uppercase tracking-wide">
@@ -302,7 +319,7 @@ export default function Home() {
           
           <h1 className="text-4xl lg:text-6xl font-extrabold tracking-tight leading-tight text-white">
             Save and grow <br />
-            <span className="bg-gradient-to-r from-[#00C805] to-[#00b004] bg-clip-text text-transparent">
+            <span className="text-[#00C805]">
               together
             </span>
           </h1>
