@@ -822,12 +822,12 @@ export default function Dashboard() {
                   <button
                     onClick={handleTriggerRotation}
                     disabled={isRotating || activeCircle.members.length === 0}
-                    className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 disabled:from-emerald-500/30 disabled:to-teal-500/30 disabled:text-[#8C8C8C] text-[#000000] font-bold text-xs rounded-xl flex items-center space-x-1.5 shadow-md shadow-emerald-500/10 transition cursor-pointer active:scale-95 transition-transform duration-100"
+                    className="px-4 py-2 bg-[#CCFF00] hover:bg-[#b3e600] disabled:bg-[#CCFF00]/30 disabled:text-[#8C8C8C]/50 text-[#000000] font-bold text-xs rounded-xl flex items-center space-x-1.5 shadow-md transition cursor-pointer active:scale-95 transition-transform duration-100"
                   >
                     {isRotating ? (
-                      <div className="h-3 w-3 border-2 border-[#303030]/20 border-t-[#090D16] rounded-full animate-spin" />
+                      <div className="h-3 w-3 border-2 border-[#303030]/20 border-t-black rounded-full animate-spin" />
                     ) : (
-                      <Play className="h-3 w-3 fill-[#090D16]" />
+                      <Play className="h-3 w-3 fill-[#000000]" />
                     )}
                     <span>Trigger Rotation</span>
                   </button>
@@ -1105,10 +1105,10 @@ export default function Dashboard() {
               <button
                 type="submit"
                 disabled={isCreating || !newCircleName.trim()}
-                className="w-full h-11 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 disabled:from-violet-600/30 disabled:to-indigo-600/30 disabled:text-[#8C8C8C] text-white font-semibold text-sm rounded-xl shadow-lg shadow-violet-600/15 transition flex items-center justify-center cursor-pointer active:scale-95 transition-transform duration-100"
+                className="w-full h-11 bg-[#CCFF00] hover:bg-[#b3e600] disabled:bg-[#CCFF00]/30 disabled:text-[#8C8C8C]/50 text-[#000000] font-extrabold text-sm rounded-xl shadow-lg shadow-emerald-500/10 transition flex items-center justify-center cursor-pointer active:scale-95 transition-transform duration-100"
               >
                 {isCreating ? (
-                  <div className="h-4 w-4 border-2 border-[#303030] border-t-white rounded-full animate-spin" />
+                  <div className="h-4 w-4 border-2 border-[#303030] border-t-black rounded-full animate-spin" />
                 ) : (
                   "Deploy Circle"
                 )}
@@ -1273,10 +1273,10 @@ export default function Dashboard() {
               <button
                 type="submit"
                 disabled={isWithdrawing || !withdrawRecipient.trim()}
-                className="w-full h-11 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 disabled:from-red-600/30 disabled:to-rose-600/30 disabled:text-[#8C8C8C] text-white font-semibold text-sm rounded-xl shadow-lg shadow-red-600/15 transition flex items-center justify-center cursor-pointer active:scale-95 transition-transform duration-100"
+                className="w-full h-11 bg-[#CCFF00] hover:bg-[#b3e600] disabled:bg-[#CCFF00]/30 disabled:text-[#8C8C8C]/50 text-[#000000] font-extrabold text-sm rounded-xl shadow-lg shadow-emerald-500/10 transition flex items-center justify-center cursor-pointer active:scale-95 transition-transform duration-100"
               >
                 {isWithdrawing ? (
-                  <div className="h-4 w-4 border-2 border-[#303030] border-t-white rounded-full animate-spin" />
+                  <div className="h-4 w-4 border-2 border-[#303030] border-t-black rounded-full animate-spin" />
                 ) : (
                   "Withdraw Tokens"
                 )}
