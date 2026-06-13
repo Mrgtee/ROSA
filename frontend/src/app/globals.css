@@ -1,16 +1,16 @@
 @import "tailwindcss";
 
 :root {
-  --background: #090D16;
+  --background: #030712;
   --foreground: #F8FAFC;
-  --card-bg: rgba(17, 24, 39, 0.6);
-  --border-color: rgba(255, 255, 255, 0.05);
+  --card-bg: rgba(17, 24, 39, 0.4);
+  --border-color: rgba(255, 255, 255, 0.04);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-outfit);
   --font-mono: var(--font-geist-mono);
 }
 
@@ -18,18 +18,78 @@ body {
   background: var(--background);
   color: var(--foreground);
   min-height: 100vh;
+  font-family: var(--font-outfit), sans-serif;
 }
 
+/* Glassmorphic premium panels */
+.glass-panel {
+  background: rgba(17, 24, 39, 0.45);
+  backdrop-filter: blur(16px) saturate(120%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+.glass-panel-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-panel-hover:hover {
+  background: rgba(17, 24, 39, 0.55);
+  border-color: rgba(124, 58, 237, 0.3); /* Violet highlight */
+  box-shadow: 0 12px 40px 0 rgba(124, 58, 237, 0.08);
+  transform: translateY(-2px);
+}
+
+/* Scrollbar customization */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #090D16;
+  background: #030712;
 }
 ::-webkit-scrollbar-thumb {
-  background: #1E293B;
-  border-radius: 4px;
+  background: #1f2937;
+  border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #334155;
+  background: #4b5563;
+}
+
+/* Dynamic rotating pointer keyframes */
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 20s linear infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 4s ease-in-out infinite;
+}
+
+/* Floating label/glow inputs */
+.glow-input {
+  transition: all 0.2s ease;
+}
+.glow-input:focus {
+  border-color: rgba(139, 92, 246, 0.5); /* Violet */
+  box-shadow: 0 0 15px rgba(139, 92, 246, 0.15);
 }
