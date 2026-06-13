@@ -5,6 +5,14 @@ use alloc::vec;
 use alloc::vec::Vec;
 use alloy_primitives::{Address, U256, U64, U16};
 use stylus_sdk::prelude::*;
+use alloy_sol_types::sol;
+
+sol! {
+    event CircleCreated(uint256 indexed circle_id, address indexed token_address, uint256 contribution_amount, bool require_collateral, uint256 collateral_amount);
+    event MemberJoined(uint256 indexed circle_id, address indexed member, uint256 collateral_staked);
+    event MemberExited(uint256 indexed circle_id, address indexed member, uint256 collateral_refunded);
+    event RotationTriggered(uint256 indexed circle_id, uint16 indexed round, address indexed recipient, uint256 total_pot);
+}
 
 sol_interface! {
     interface IERC20 {
@@ -69,6 +77,14 @@ impl From<RosaError> for Vec<u8> {
     }
 }
 
+impl RosaPool {
+    fn log_event<T: alloy_sol_types::SolEvent>(&self, event: T) {
+        use stylus_sdk::stylus_core::RawLogAccess;
+        let log_data = event.encode_log_data();
+        let _ = self.vm().raw_log(log_data.topics(), &log_data.data);
+    }
+}
+
 #[public]
 impl RosaPool {
     pub fn get_circle_count(&self) -> Result<U256, Vec<u8>> {
@@ -101,6 +117,14 @@ impl RosaPool {
         new_circle.is_active.set(true);
         new_circle.require_collateral.set(require_collateral);
         new_circle.collateral_amount.set(collateral_amount);
+
+        self.log_event(CircleCreated {
+            circle_id: next_id,
+            token_address,
+            contribution_amount,
+            require_collateral,
+            collateral_amount,
+        });
 
         Ok(next_id)
     }
@@ -156,6 +180,12 @@ impl RosaPool {
         
         circle.member_count.set(current_member_count + U16::from(1));
 
+        self.log_event(MemberJoined {
+            circle_id,
+            member: sender,
+            collateral_staked: collateral_amount,
+        });
+
         Ok(())
     }
 
@@ -203,6 +233,12 @@ impl RosaPool {
         let mut info = circle_info_map.setter(sender);
         info.is_member.set(false);
         info.collateral_balance.set(U256::from(0));
+
+        self.log_event(MemberExited {
+            circle_id,
+            member: sender,
+            collateral_refunded: collateral_balance,
+        });
 
         Ok(())
     }
@@ -354,6 +390,13 @@ impl RosaPool {
         circle.current_round.set(current_round);
         circle.active_payout_index.set((active_index + U16::from(1)) % member_count);
         circle.last_rotation_timestamp.set(U64::from(current_time));
+
+        self.log_event(RotationTriggered {
+            circle_id,
+            round: current_round.to::<u16>(),
+            recipient: recipient_addr,
+            total_pot,
+        });
 
         Ok(())
     }
