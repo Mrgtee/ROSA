@@ -72,12 +72,31 @@ export default function Dashboard() {
   const [requireCollateral, setRequireCollateral] = useState<boolean>(false);
   const [collateralAmount, setCollateralAmount] = useState<number>(10);
   const [isExiting, setIsExiting] = useState<boolean>(false);
-
-  // Interactive UI states
   const [hoveredMember, setHoveredMember] = useState<number | null>(null);
   const [estContribution, setEstContribution] = useState<number>(50);
   const [estMembers, setEstMembers] = useState<number>(6);
   const [estApy, setEstApy] = useState<number>(5.5);
+
+  // Scroll visibility states for header auto-hide
+  const [showHeader, setShowHeader] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      if (currentScrollY > lastScrollY && currentScrollY > 80) {
+        // scrolling down -> hide header
+        setShowHeader(false);
+      } else {
+        // scrolling up -> show header
+        setShowHeader(true);
+      }
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [lastScrollY]);
 
   // Get active network config
   const network = getNetworkConfig(selectedChainId);
@@ -483,26 +502,42 @@ export default function Dashboard() {
 
   return (
     <div className="flex-1 flex flex-col bg-[#000000] relative">
-      {/* Background glow */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
-        <div className="absolute top-[-10%] right-[-10%] w-[400px] h-[400px] rounded-full bg-[#00C805]/5 blur-[100px]" />
-      </div>
-
       {/* Header */}
-      <header className="sticky top-0 border-b border-[#303030] bg-[#000000] z-50">
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="h-9 w-9 rounded-lg bg-gradient-to-tr from-[#00C805] to-[#00b004] p-[1px]">
-              <div className="h-full w-full bg-[#000000] rounded-[7px] flex items-center justify-center">
-                <Users className="h-4 w-4 text-[#00C805]" />
+      <header className={`sticky top-0 border-b border-[#303030] bg-[#000000] z-50 transition-transform duration-300 ${
+        showHeader ? "translate-y-0" : "-translate-y-full"
+      }`}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-0 sm:h-20 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center justify-between w-full sm:w-auto">
+            <div className="flex items-center space-x-3">
+              <div className="h-9 w-9 rounded-lg bg-[#00C805] p-[1px]">
+                <div className="h-full w-full bg-[#000000] rounded-[7px] flex items-center justify-center">
+                  <Users className="h-4 w-4 text-[#00C805]" />
+                </div>
               </div>
+              <span className="text-lg font-bold tracking-tight text-white">
+                ROSA Dashboard
+              </span>
             </div>
-            <span className="text-lg font-bold tracking-tight bg-gradient-to-r from-white to-[#8C8C8C] bg-clip-text text-transparent">
-              ROSA Dashboard
-            </span>
+            {/* Quick Actions (Mobile) */}
+            <div className="flex items-center space-x-1 sm:hidden">
+              <button
+                onClick={refreshOnChainData}
+                disabled={loadingCircles}
+                className="p-2 text-[#8C8C8C] hover:text-white rounded-lg hover:bg-[#0A0A0A] transition active:scale-95 transition-transform duration-100"
+                title="Refresh blockchain data"
+              >
+                <RefreshCw className={`h-4 w-4 ${loadingCircles ? "animate-spin" : ""}`} />
+              </button>
+              <Link 
+                href="/"
+                className="p-2 text-[#8C8C8C] hover:text-white rounded-lg hover:bg-[#0A0A0A] transition active:scale-95 transition-transform duration-100"
+              >
+                <LogOut className="h-4 w-4" />
+              </Link>
+            </div>
           </div>
 
-          <div className="flex items-center space-x-4">
+          <div className="flex flex-wrap items-center justify-center sm:justify-end gap-3 w-full sm:w-auto">
             {/* Network Selector */}
             <select
               value={selectedChainId}
@@ -511,7 +546,7 @@ export default function Dashboard() {
                 setCircles([]);
                 setSelectedCircleId("");
               }}
-              className="h-9 px-3 rounded-xl bg-[#0A0A0A]/80 border border-[#303030] text-xs font-semibold text-slate-200 focus:outline-none focus:border-[#00C805]/50"
+              className="h-9 px-3 rounded-xl bg-[#0A0A0A]/80 border border-[#303030] text-xs font-semibold text-slate-200 focus:outline-none focus:border-[#00C805]/50 w-full sm:w-auto"
             >
               <option value={46630}>Robinhood Chain Testnet</option>
               <option value={421614}>Arbitrum Sepolia</option>
@@ -522,13 +557,14 @@ export default function Dashboard() {
                 {userEmail}
               </span>
             )}
+            
             <button
               onClick={handleCopyAddress}
-              className="hidden sm:flex items-center space-x-2 border border-[#303030] px-3 py-1.5 rounded-xl bg-[#0A0A0A] hover:bg-white/10 hover:border-[#303030] transition cursor-pointer text-left focus:outline-none active:scale-95 transition-transform duration-100"
+              className="flex items-center space-x-2 border border-[#303030] px-3 py-1.5 rounded-xl bg-[#0A0A0A] hover:bg-white/10 hover:border-[#303030] transition cursor-pointer text-left focus:outline-none active:scale-95 transition-transform duration-100 text-xs font-mono text-slate-300 w-auto"
               title="Copy Smart Wallet Address"
             >
               <Wallet className="h-4 w-4 text-[#00C805]" />
-              <span className="text-xs font-mono text-slate-300">
+              <span>
                 {userAddress ? `${userAddress.slice(0, 6)}...${userAddress.slice(-4)}` : "Loading..."}
               </span>
               {copiedAddress ? (
@@ -537,6 +573,7 @@ export default function Dashboard() {
                 <Copy className="h-3.5 w-3.5 text-[#8C8C8C] shrink-0 ml-1" />
               )}
             </button>
+            
             <button
               onClick={() => {
                 setWithdrawChainId(selectedChainId);
@@ -544,26 +581,30 @@ export default function Dashboard() {
                 setWithdrawTokenAddress(conf.tokenAddress);
                 setShowWithdrawModal(true);
               }}
-              className="flex items-center space-x-1.5 border border-red-500/20 px-3 py-1.5 rounded-xl bg-red-500/5 hover:bg-red-500/10 hover:border-red-500/35 transition cursor-pointer text-xs font-semibold text-red-400 focus:outline-none"
+              className="flex items-center space-x-1.5 border border-red-500/20 px-3 py-1.5 rounded-xl bg-red-500/5 hover:bg-red-500/10 hover:border-red-500/35 transition cursor-pointer text-xs font-semibold text-red-400 focus:outline-none w-auto"
               title="Withdraw Tokens"
             >
               <LogOut className="h-3.5 w-3.5 rotate-180 text-red-400" />
               <span>Withdraw</span>
             </button>
-            <button
-              onClick={refreshOnChainData}
-              disabled={loadingCircles}
-              className="p-2 text-[#8C8C8C] hover:text-white rounded-lg hover:bg-[#0A0A0A] transition active:scale-95 transition-transform duration-100"
-              title="Refresh blockchain data"
-            >
-              <RefreshCw className={`h-4 w-4 ${loadingCircles ? "animate-spin" : ""}`} />
-            </button>
-            <Link 
-              href="/"
-              className="p-2 text-[#8C8C8C] hover:text-white rounded-lg hover:bg-[#0A0A0A] transition active:scale-95 transition-transform duration-100"
-            >
-              <LogOut className="h-4 w-4" />
-            </Link>
+
+            {/* Quick Actions (Desktop) */}
+            <div className="hidden sm:flex items-center space-x-1">
+              <button
+                onClick={refreshOnChainData}
+                disabled={loadingCircles}
+                className="p-2 text-[#8C8C8C] hover:text-white rounded-lg hover:bg-[#0A0A0A] transition active:scale-95 transition-transform duration-100"
+                title="Refresh blockchain data"
+              >
+                <RefreshCw className={`h-4 w-4 ${loadingCircles ? "animate-spin" : ""}`} />
+              </button>
+              <Link 
+                href="/"
+                className="p-2 text-[#8C8C8C] hover:text-white rounded-lg hover:bg-[#0A0A0A] transition active:scale-95 transition-transform duration-100"
+              >
+                <LogOut className="h-4 w-4" />
+              </Link>
+            </div>
           </div>
         </div>
       </header>
@@ -582,7 +623,7 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <div className="flex items-center space-x-3">
+          <div className="flex flex-wrap items-center justify-center gap-2.5">
             {selectedChainId === 46630 ? (
               <>
                 <a
@@ -620,10 +661,7 @@ export default function Dashboard() {
       </div>
 
       {/* Main Content Dashboard */}
-      <div className="flex-1 max-w-7xl mx-auto px-6 py-8 w-full grid lg:grid-cols-12 gap-8 z-10 overflow-y-auto">
-        
-        {/* Left Column - Stats & Circles List (8 cols) */}
-        <div className="lg:col-span-8 space-y-8">
+      <div className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 py-8 w-full space-y-8 z-10">
           
           {/* Metrics summary */}
           <div className="grid sm:grid-cols-3 gap-6">
@@ -952,7 +990,8 @@ export default function Dashboard() {
                   <h4 className="text-xs font-bold text-[#8C8C8C] uppercase tracking-wider">
                     Circle Members
                   </h4>
-                  <div className="border border-[#303030] rounded-2xl overflow-hidden bg-[#000000]/40">
+                  <div className="border border-[#303030] rounded-2xl overflow-x-auto bg-[#000000]/40 w-full">
+                    <div className="min-w-[450px] md:min-w-0">
                     <div className="grid grid-cols-12 gap-2 bg-[#0A0A0A] px-4 py-2.5 text-[10px] text-[#8C8C8C] font-semibold uppercase tracking-wider">
                       <div className="col-span-4">Member</div>
                       <div className="col-span-3">Wallet</div>
@@ -997,6 +1036,7 @@ export default function Dashboard() {
                         </div>
                       ))}
                     </div>
+                  </div>
                   </div>
                 </div>
 
@@ -1191,10 +1231,7 @@ export default function Dashboard() {
                 ))
               )}
             </div>
-          </div>
-
-        </div>
-
+      </div>
       </div>
 
       {/* Withdraw Modal Overlay */}
