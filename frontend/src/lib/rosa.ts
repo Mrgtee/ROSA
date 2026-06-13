@@ -2,11 +2,12 @@ import { createPublicClient, http, parseAbi, Address } from "viem";
 
 export const ROSA_ABI = parseAbi([
   "function getCircleCount() external view returns (uint256)",
-  "function createCircle(address token_address, uint256 contribution_amount, uint256 rotation_period) external returns (uint256)",
+  "function createCircle(address token_address, uint256 contribution_amount, uint256 rotation_period, bool require_collateral, uint256 collateral_amount) external returns (uint256)",
   "function joinCircle(uint256 circle_id) external",
+  "function exitCircle(uint256 circle_id) external",
   "function triggerRotation(uint256 circle_id) external",
-  "function getCircleDetails(uint256 circle_id) external view returns (address, uint256, uint64, uint64, uint16, uint16, uint16, bool)",
-  "function getMemberInfo(uint256 circle_id, address member) external view returns (bool, uint16, uint256, bool)",
+  "function getCircleDetails(uint256 circle_id) external view returns (address, uint256, uint64, uint64, uint16, uint16, uint16, bool, bool, uint256)",
+  "function getMemberInfo(uint256 circle_id, address member) external view returns (bool, uint16, uint256, bool, uint256)",
   "function getMemberAddress(uint256 circle_id, uint16 index) external view returns (address)",
   "event CircleCreated(uint256 indexed circle_id, address indexed creator)"
 ]);
@@ -88,6 +89,7 @@ export interface OnChainMember {
   missed: number;
   yieldEarned: number;
   isCurrentUser: boolean;
+  collateralBalance: number;
 }
 
 export interface OnChainCircle {
@@ -104,6 +106,8 @@ export interface OnChainCircle {
   activePayoutIndex: number;
   inviteCode: string;
   isActive: boolean;
+  requireCollateral: boolean;
+  collateralAmount: number;
 }
 
 // Fetch all circles and their details from the blockchain dynamically based on Chain ID
@@ -139,7 +143,9 @@ export async function fetchOnChainCircles(chainId: number, userAddress: string):
           currentRound,
           memberCount,
           activePayoutIndex,
-          isActive
+          isActive,
+          requireCollateral,
+          collateralAmount
         ] = details;
 
         if (!isActive) continue;
@@ -163,7 +169,7 @@ export async function fetchOnChainCircles(chainId: number, userAddress: string):
             args: [circleId, mAddr],
           });
 
-          const [hasReceived, missed, yieldEarned, isMember] = mInfo;
+          const [hasReceived, missed, yieldEarned, isMember, collateralBalance] = mInfo;
 
           if (isMember) {
             members.push({
@@ -172,6 +178,7 @@ export async function fetchOnChainCircles(chainId: number, userAddress: string):
               missed: Number(missed),
               yieldEarned: Number(yieldEarned) / 10**6, // assuming 6 decimals
               isCurrentUser: mAddr.toLowerCase() === userAddress.toLowerCase(),
+              collateralBalance: Number(collateralBalance) / 10**6,
             });
           }
         }
@@ -229,6 +236,8 @@ export async function fetchOnChainCircles(chainId: number, userAddress: string):
           activePayoutIndex: Number(activePayoutIndex),
           inviteCode,
           isActive,
+          requireCollateral,
+          collateralAmount: Number(collateralAmount) / 10**6,
         });
       } catch (circleErr) {
         console.error(`Error fetching details for circle ${i}:`, circleErr);

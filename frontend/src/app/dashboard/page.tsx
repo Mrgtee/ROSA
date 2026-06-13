@@ -69,10 +69,18 @@ export default function Dashboard() {
   const [isJoining, setIsJoining] = useState<boolean>(false);
   const [isRotating, setIsRotating] = useState<boolean>(false);
   const [copiedAddress, setCopiedAddress] = useState<boolean>(false);
+  const [requireCollateral, setRequireCollateral] = useState<boolean>(false);
+  const [collateralAmount, setCollateralAmount] = useState<number>(10);
+  const [isExiting, setIsExiting] = useState<boolean>(false);
 
   // Get active network config
   const network = getNetworkConfig(selectedChainId);
   const activeCircle = circles.find(c => c.id === selectedCircleId) || circles[0];
+  const currentUserMemberInfo = activeCircle?.members.find(
+    m => m.address.toLowerCase() === userAddress.toLowerCase()
+  );
+  const isCurrentUserMember = !!currentUserMemberInfo;
+  const hasCurrentUserReceived = currentUserMemberInfo?.hasReceived || false;
 
   const logSim = (msg: string) => {
     setSimulationLog(prev => [`[${new Date().toLocaleTimeString()}] ${msg}`, ...prev].slice(0, 15));
@@ -220,6 +228,13 @@ export default function Dashboard() {
 
       const tokenAddress = details[0];
       const contributionAmount = details[1];
+      const reqCollateral = details[8];
+      const colAmount = details[9];
+
+      let approveAmount = contributionAmount;
+      if (reqCollateral) {
+        approveAmount = colAmount + contributionAmount;
+      }
 
       // 2. Approve stablecoin spend to ROSA Pool contract
       logSim(`Step 1/2: Submitting spend approval transaction...`);
@@ -227,7 +242,7 @@ export default function Dashboard() {
         address: tokenAddress,
         abi: ERC20_ABI,
         functionName: "approve",
-        args: [network.poolAddress, contributionAmount],
+        args: [network.poolAddress, approveAmount],
       });
       logSim(`Approval TX sent: ${approveHash.slice(0, 10)}... waiting confirmation`);
       await client.waitForTransactionReceipt({ hash: approveHash });
@@ -284,6 +299,9 @@ export default function Dashboard() {
       const contributionDecimals = parseUnits(newContribution.toString(), 6); // standard 6 decimals for USDC/USDG
       const periodSeconds = BigInt(newPeriod);
       const tokenToUse = (customTokenAddress.trim() || network.tokenAddress) as Address;
+      const collateralDecimals = requireCollateral 
+        ? parseUnits(collateralAmount.toString(), 6) 
+        : BigInt(0);
 
       // Call createCircle
       logSim("Submitting createCircle transaction to Stylus contract...");
@@ -291,7 +309,7 @@ export default function Dashboard() {
         address: network.poolAddress,
         abi: ROSA_ABI,
         functionName: "createCircle",
-        args: [tokenToUse, contributionDecimals, periodSeconds],
+        args: [tokenToUse, contributionDecimals, periodSeconds, requireCollateral, collateralDecimals],
       });
       logSim(`Create Circle TX sent: ${createHash.slice(0, 10)}... waiting confirmation`);
       
@@ -375,6 +393,44 @@ export default function Dashboard() {
       console.error(err);
     } finally {
       setIsWithdrawing(false);
+    }
+  };
+
+  // 3. Exit Circle and reclaim collateral
+  const handleExitCircle = async () => {
+    if (!activeCircle || !userAddress || !privateKey) return;
+
+    setIsExiting(true);
+    logSim(`Exiting Circle #${activeCircle.id} and claiming collateral refund...`);
+
+    try {
+      const client = getPublicClient(selectedChainId);
+      const account = privateKeyToAccount(privateKey as Address);
+      const walletClient = createWalletClient({
+        account,
+        chain: network.chain,
+        transport: http(),
+      });
+
+      const circleIdVal = BigInt(activeCircle.id);
+
+      logSim("Submitting exitCircle transaction to Stylus contract...");
+      const exitHash = await walletClient.writeContract({
+        address: network.poolAddress,
+        abi: ROSA_ABI,
+        functionName: "exitCircle",
+        args: [circleIdVal],
+      });
+      logSim(`Exit Circle TX sent: ${exitHash.slice(0, 10)}... waiting confirmation`);
+      await client.waitForTransactionReceipt({ hash: exitHash });
+
+      logSim(`Successfully exited Circle #${activeCircle.id} and refunded collateral!`);
+      await refreshOnChainData();
+    } catch (err: any) {
+      logSim(`Exit Circle failed: ${err.message}`);
+      console.error(err);
+    } finally {
+      setIsExiting(false);
     }
   };
 
@@ -638,22 +694,45 @@ export default function Dashboard() {
           {activeCircle && (
             <div className="p-6 rounded-3xl bg-[#111827]/30 border border-white/5 space-y-6">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div>
+                <div className="space-y-1">
                   <span className="text-xs text-slate-400 block uppercase tracking-wider">Active Circle Focus</span>
-                  <h2 className="text-xl font-bold text-white">Circle #{activeCircle.id} details</h2>
+                  <div className="flex items-center space-x-3">
+                    <h2 className="text-xl font-bold text-white">Circle #{activeCircle.id}</h2>
+                    {activeCircle.requireCollateral ? (
+                      <span className="text-[10px] text-emerald-400 font-semibold bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
+                        Collateral Backed: {activeCircle.collateralAmount} {activeCircle.tokenSymbol}
+                      </span>
+                    ) : (
+                      <span className="text-[10px] text-slate-400 font-semibold bg-white/5 border border-white/5 px-2 py-0.5 rounded-full">
+                        Zero Collateral Circle
+                      </span>
+                    )}
+                  </div>
                 </div>
                 
                 <div className="flex items-center space-x-3">
                   <div className="text-right">
-                    <span className="text-[10px] text-slate-400 block">Invite Code</span>
+                    <span className="text-[10px] text-slate-400 block font-semibold">Invite Code</span>
                     <span className="text-sm font-mono font-bold text-violet-400 bg-violet-400/5 border border-violet-400/10 px-2.5 py-1 rounded-lg">
                       {activeCircle.inviteCode}
                     </span>
                   </div>
+                  {isCurrentUserMember && !hasCurrentUserReceived && (
+                    <button
+                      onClick={handleExitCircle}
+                      disabled={isExiting}
+                      className="px-4 py-2 border border-red-500/30 bg-red-500/5 hover:bg-red-500/10 text-red-400 font-bold text-xs rounded-xl flex items-center space-x-1.5 transition cursor-pointer"
+                    >
+                      {isExiting ? (
+                        <div className="h-3 w-3 border-2 border-red-400/20 border-t-red-400 rounded-full animate-spin" />
+                      ) : null}
+                      <span>Exit Circle</span>
+                    </button>
+                  )}
                   <button
                     onClick={handleTriggerRotation}
                     disabled={isRotating || activeCircle.members.length === 0}
-                    className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 disabled:from-emerald-500/30 disabled:to-teal-500/30 disabled:text-slate-500 text-[#090D16] font-bold text-xs rounded-xl flex items-center space-x-1.5 shadow-md shadow-emerald-500/10 transition"
+                    className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 disabled:from-emerald-500/30 disabled:to-teal-500/30 disabled:text-slate-500 text-[#090D16] font-bold text-xs rounded-xl flex items-center space-x-1.5 shadow-md shadow-emerald-500/10 transition cursor-pointer"
                   >
                     {isRotating ? (
                       <div className="h-3 w-3 border-2 border-[#090D16]/20 border-t-[#090D16] rounded-full animate-spin" />
@@ -670,28 +749,36 @@ export default function Dashboard() {
                 <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Circle Members & Rotation Status</h3>
                 <div className="border border-white/5 rounded-2xl overflow-hidden bg-[#090D16]/40">
                   <div className="grid grid-cols-12 gap-4 bg-white/5 px-6 py-3 text-xs text-slate-400 font-medium">
-                    <div className="col-span-5">Member Name</div>
-                    <div className="col-span-4">Smart Account / Wallet</div>
-                    <div className="col-span-3 text-right">Pot Received</div>
+                    <div className="col-span-4">Member Name</div>
+                    <div className="col-span-3">Smart Wallet</div>
+                    <div className="col-span-2 text-center">Collateral</div>
+                    <div className="col-span-1 text-center font-semibold text-red-400">Missed</div>
+                    <div className="col-span-2 text-right">Pot Status</div>
                   </div>
                   
                   <div className="divide-y divide-white/5">
                     {activeCircle.members.map((m, idx) => (
                       <div key={idx} className="grid grid-cols-12 gap-4 px-6 py-4 text-sm items-center">
-                        <div className="col-span-5 font-semibold text-white flex items-center space-x-2">
+                        <div className="col-span-4 font-semibold text-white flex items-center space-x-2">
                           <span>
                             {m.isCurrentUser ? "You" : `Member #${idx + 1}`}
                           </span>
                           {m.isCurrentUser && (
                             <span className="text-[9px] bg-violet-500/20 text-violet-300 border border-violet-500/30 px-1.5 py-0.2 rounded-full">
-                              Smart Wallet
+                              You
                             </span>
                           )}
                         </div>
-                        <div className="col-span-4 font-mono text-xs text-slate-400">
-                          {m.address.slice(0, 8)}...{m.address.slice(-6)}
+                        <div className="col-span-3 font-mono text-xs text-slate-400">
+                          {m.address.slice(0, 6)}...{m.address.slice(-4)}
                         </div>
-                        <div className="col-span-3 text-right">
+                        <div className="col-span-2 text-center text-xs font-mono font-semibold text-slate-200">
+                          {m.collateralBalance} {activeCircle.tokenSymbol}
+                        </div>
+                        <div className="col-span-1 text-center text-xs font-mono font-bold text-red-400/80">
+                          {m.missed}
+                        </div>
+                        <div className="col-span-2 text-right">
                           {m.hasReceived ? (
                             <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-400/10 text-emerald-400 border border-emerald-400/20">
                               <CheckCircle className="h-3.5 w-3.5" />
@@ -776,7 +863,7 @@ export default function Dashboard() {
               </div>
 
               <div>
-                <label className="text-[10px] text-slate-400 uppercase tracking-wider block mb-1.5">Stablecoin Token Address</label>
+                <label className="text-[10px] text-slate-400 uppercase tracking-wider block mb-1.5 font-semibold">Stablecoin Token Address</label>
                 <input
                   type="text"
                   value={customTokenAddress}
@@ -789,9 +876,36 @@ export default function Dashboard() {
                 </span>
               </div>
 
+              <div className="p-4 rounded-xl bg-white/5 border border-white/5 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <label className="text-xs text-white font-semibold block">Require Collateral</label>
+                    <span className="text-[9px] text-slate-400 block">Enforce safety deposits to cover defaults.</span>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={requireCollateral}
+                    onChange={(e) => setRequireCollateral(e.target.checked)}
+                    className="h-4.5 w-4.5 text-violet-600 focus:ring-violet-500 border-white/10 bg-[#090D16] rounded cursor-pointer"
+                  />
+                </div>
+
+                {requireCollateral && (
+                  <div>
+                    <label className="text-[10px] text-slate-400 uppercase tracking-wider block mb-1.5 font-semibold">Collateral Amount ({network.tokenSymbol})</label>
+                    <input
+                      type="number"
+                      value={collateralAmount}
+                      onChange={(e) => setCollateralAmount(Number(e.target.value))}
+                      className="w-full h-11 px-4 rounded-xl bg-white/5 border border-white/5 text-white text-sm focus:outline-none focus:border-violet-500/50"
+                    />
+                  </div>
+                )}
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[10px] text-slate-400 uppercase tracking-wider block mb-1.5">Contribution</label>
+                  <label className="text-[10px] text-slate-400 uppercase tracking-wider block mb-1.5 font-semibold">Contribution</label>
                   <input
                     type="number"
                     value={newContribution}
