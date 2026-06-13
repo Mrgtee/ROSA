@@ -630,7 +630,7 @@ export default function Dashboard() {
                   href="https://faucet.testnet.chain.robinhood.com"
                   target="_blank"
                   rel="noreferrer"
-                  className="px-3 py-1.5 bg-[#CCFF00] hover:bg-[#b3e600] text-[#000000] border border-[#CCFF00] rounded-xl text-xs font-extrabold transition active:scale-95 transition-transform duration-100"
+                  className="px-3 py-1.5 bg-transparent text-[#78D197] border border-[#303030] hover:border-[#78D197]/40 rounded-xl text-xs font-semibold transition active:scale-95 transition-transform duration-100"
                   title="Official Robinhood Faucet (ETH + Stock Tokens)"
                 >
                   Robinhood Faucet
@@ -639,7 +639,7 @@ export default function Dashboard() {
                   href="https://faucet.paxos.com/?network=robinhood"
                   target="_blank"
                   rel="noreferrer"
-                  className="px-3 py-1.5 bg-[#CCFF00] hover:bg-[#b3e600] text-[#000000] border border-[#CCFF00] rounded-xl text-xs font-extrabold transition active:scale-95 transition-transform duration-100"
+                  className="px-3 py-1.5 bg-transparent text-[#78D197] border border-[#303030] hover:border-[#78D197]/40 rounded-xl text-xs font-semibold transition active:scale-95 transition-transform duration-100"
                   title="Paxos USDG Faucet (100 USDG per request)"
                 >
                   Paxos USDG Faucet
@@ -650,7 +650,7 @@ export default function Dashboard() {
                 href="https://faucet.circle.com"
                 target="_blank"
                 rel="noreferrer"
-                className="px-3 py-1.5 bg-[#CCFF00] hover:bg-[#b3e600] text-[#000000] border border-[#CCFF00] rounded-xl text-xs font-extrabold transition active:scale-95 transition-transform duration-100"
+                className="px-3 py-1.5 bg-transparent text-[#78D197] border border-[#303030] hover:border-[#78D197]/40 rounded-xl text-xs font-semibold transition active:scale-95 transition-transform duration-100"
                 title="Circle USDC Faucet"
               >
                 Circle USDC Faucet
