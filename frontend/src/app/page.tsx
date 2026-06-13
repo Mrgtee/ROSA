@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   Users, 
   TrendingUp, 
@@ -23,14 +23,39 @@ export default function Home() {
   const [password, setPassword] = useState("");
   const [recoveryKey, setRecoveryKey] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  // Simulator States
   const [simMembers, setSimMembers] = useState(5);
   const [simContribution, setSimContribution] = useState(50);
   const [simRound, setSimRound] = useState(1);
+  const [simApy, setSimApy] = useState(5.4);
+  const [isAutoStepping, setIsAutoStepping] = useState(true);
 
   // Registration states
   const [generatedRecoveryKey, setGeneratedRecoveryKey] = useState("");
   const [hasConfirmedSave, setHasConfirmedSave] = useState(false);
   const [copiedKey, setCopiedKey] = useState(false);
+
+  // Check login state
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const storedKey = localStorage.getItem("rosa_demo_key");
+      if (storedKey) {
+        setIsLoggedIn(true);
+      }
+    }
+  }, []);
+
+  // Auto step rotation simulation for dynamic visuals
+  useEffect(() => {
+    if (!isAutoStepping) return;
+    const interval = setInterval(() => {
+      setSimRound(prev => (prev % simMembers) + 1);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [simMembers, isAutoStepping]);
 
   // Convert hex private key to formatted recovery key (e.g. ROSA-XXXX-XXXX-...)
   const encodeRecoveryKey = (privKeyHex: string): string => {
@@ -67,7 +92,6 @@ export default function Home() {
     try {
       const encoder = new TextEncoder();
       
-      // Hash the password for verification
       const passwordData = encoder.encode(password.trim() + "rosa-verify-salt");
       const passwordHashBuffer = await window.crypto.subtle.digest("SHA-256", passwordData);
       const passwordHashHex = Array.from(new Uint8Array(passwordHashBuffer)).map(b => b.toString(16).padStart(2, "0")).join("");
@@ -82,7 +106,6 @@ export default function Home() {
           return;
         }
       } else {
-        // First login on this browser/device for this email: save it in registry to lock it
         registry[email.trim().toLowerCase()] = { passwordHash: passwordHashHex };
         localStorage.setItem("rosa_user_auth_registry", JSON.stringify(registry));
       }
@@ -97,7 +120,6 @@ export default function Home() {
       const hashHex = hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
       const privateKey = "0x" + hashHex;
 
-      // Store private key and email
       localStorage.setItem("rosa_demo_key", privateKey);
       localStorage.setItem("rosa_user_email", email.trim().toLowerCase());
 
@@ -131,7 +153,6 @@ export default function Home() {
 
       const encoder = new TextEncoder();
       
-      // Save password hash
       const passwordData = encoder.encode(password.trim() + "rosa-verify-salt");
       const passwordHashBuffer = await window.crypto.subtle.digest("SHA-256", passwordData);
       const passwordHashHex = Array.from(new Uint8Array(passwordHashBuffer)).map(b => b.toString(16).padStart(2, "0")).join("");
@@ -149,11 +170,9 @@ export default function Home() {
       const hashHex = hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
       const privateKey = "0x" + hashHex;
 
-      // Generate recovery key
       const recKey = encodeRecoveryKey(privateKey);
       setGeneratedRecoveryKey(recKey);
 
-      // Temporary local storage save but user must confirm
       localStorage.setItem("rosa_demo_key", privateKey);
       localStorage.setItem("rosa_user_email", email.trim().toLowerCase());
       
@@ -177,7 +196,6 @@ export default function Home() {
       const formattedKey = recoveryKey.trim();
       const cleanKey = formattedKey.startsWith("ROSA-") ? formattedKey : "ROSA-" + formattedKey;
       
-      // Basic verification of length (ROSA- + 64 hex characters + 7 dashes = 76 characters)
       if (cleanKey.replace(/-/g, "").length !== 68) {
         alert("Invalid Recovery Key format. Please check the key and try again.");
         setIsLoading(false);
@@ -186,7 +204,6 @@ export default function Home() {
 
       const privateKey = decodeRecoveryKey(cleanKey);
 
-      // Register/Update the password hash locally for this email
       const encoder = new TextEncoder();
       const passwordData = encoder.encode(password.trim() + "rosa-verify-salt");
       const passwordHashBuffer = await window.crypto.subtle.digest("SHA-256", passwordData);
@@ -196,7 +213,6 @@ export default function Home() {
       registry[email.trim().toLowerCase()] = { passwordHash: passwordHashHex };
       localStorage.setItem("rosa_user_auth_registry", JSON.stringify(registry));
 
-      // Store private key and email
       localStorage.setItem("rosa_demo_key", privateKey);
       localStorage.setItem("rosa_user_email", email.trim().toLowerCase());
 
@@ -215,18 +231,33 @@ export default function Home() {
     }
   };
 
+  // Member names for visual timeline and preview circle
+  const previewMembers = [
+    { name: "You (Member #1)", avatar: "Y" },
+    { name: "Amina (Member #2)", avatar: "A" },
+    { name: "Carlos (Member #3)", avatar: "C" },
+    { name: "Fatima (Member #4)", avatar: "F" },
+    { name: "Elena (Member #5)", avatar: "E" },
+    { name: "Kwame (Member #6)", avatar: "K" }
+  ];
+
+  const activePreviewMembers = previewMembers.slice(0, simMembers);
+  const totalPot = simMembers * simContribution;
+  // Calculate DeFi savings interest
+  const estYield = (totalPot / 2) * (simApy / 100) * (simMembers / 12);
+
   return (
-    <div className="flex-1 flex flex-col relative overflow-hidden bg-[#090D16]">
+    <div className="flex-1 flex flex-col relative overflow-hidden bg-[#030712]">
       {/* Background glow effects */}
-      <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-violet-600/10 blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] rounded-full bg-emerald-600/10 blur-[150px] pointer-events-none" />
+      <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-violet-600/5 blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] rounded-full bg-emerald-600/5 blur-[150px] pointer-events-none" />
 
       {/* Header */}
-      <header className="border-b border-white/5 bg-[#090D16]/50 backdrop-blur-md z-10">
+      <header className="border-b border-white/5 bg-[#030712]/50 backdrop-blur-md z-20">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-violet-600 to-emerald-400 p-[1px]">
-              <div className="h-full w-full bg-[#090D16] rounded-[11px] flex items-center justify-center">
+              <div className="h-full w-full bg-[#030712] rounded-[11px] flex items-center justify-center">
                 <Users className="h-5 w-5 text-emerald-400" />
               </div>
             </div>
@@ -234,61 +265,222 @@ export default function Home() {
               <span className="text-xl font-bold tracking-tight bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
                 ROSA
               </span>
-              <span className="ml-2 px-2 py-0.5 text-[10px] font-semibold text-emerald-400 bg-emerald-400/10 rounded-full border border-emerald-400/20">
-                Robinhood & Arbitrum Support
+              <span className="ml-2.5 px-2 py-0.5 text-[9px] font-semibold text-emerald-400 bg-emerald-400/10 rounded-full border border-emerald-400/20 uppercase tracking-wide">
+                Stylus ROSCA
               </span>
             </div>
           </div>
           <div className="flex items-center space-x-4">
-            <span className="text-xs text-slate-400 border border-white/5 px-3 py-1.5 rounded-full bg-white/5">
-              Stylus WASM Engine
-            </span>
+            {isLoggedIn ? (
+              <Link
+                href="/dashboard"
+                className="px-4 py-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-semibold text-xs rounded-xl shadow-lg shadow-violet-600/15 transition flex items-center space-x-1.5"
+              >
+                <span>Dashboard</span>
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            ) : (
+              <button
+                onClick={() => setShowAuthModal(true)}
+                className="px-4 py-2 bg-white/5 hover:bg-white/10 text-white font-semibold text-xs rounded-xl border border-white/10 transition cursor-pointer"
+              >
+                Sign In
+              </button>
+            )}
           </div>
         </div>
       </header>
 
       {/* Hero Section */}
-      <main className="flex-1 max-w-7xl mx-auto px-6 flex flex-col lg:flex-row items-center justify-center gap-12 py-16 z-10">
-        <div className="flex-1 space-y-8 text-center lg:text-left">
-          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-violet-600/10 border border-violet-500/20 text-xs font-semibold text-violet-400">
-            <Zap className="h-3 w-3" />
-            <span>Arbitrum Open House London Edition</span>
+      <main className="flex-1 max-w-7xl mx-auto px-6 flex flex-col lg:flex-row items-center justify-between gap-12 py-12 lg:py-20 z-10 w-full">
+        
+        {/* Left Column - Product Explanation */}
+        <div className="flex-1 space-y-8 text-center lg:text-left max-w-2xl">
+          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-violet-600/10 border border-violet-500/20 text-[10px] font-semibold text-violet-400 uppercase tracking-wider">
+            <Users className="h-3.5 w-3.5 text-violet-400" />
+            <span>Decentralized Rotating Savings (ROSCAs)</span>
           </div>
-          <h1 className="text-5xl lg:text-6xl font-extrabold tracking-tight leading-none text-white">
-            Save together, <br />
+          
+          <h1 className="text-4xl lg:text-6xl font-extrabold tracking-tight leading-tight text-white">
+            Trust-Based Savings.<br />
             <span className="bg-gradient-to-r from-emerald-400 to-teal-300 bg-clip-text text-transparent">
-              grow together.
+              Secured On-Chain.
             </span>
           </h1>
-          <p className="text-lg text-slate-400 max-w-xl mx-auto lg:mx-0 leading-relaxed">
-            ROSA digitizes the global tradition of rotating savings circles (Sou-Sous, Tandas, and Partnerhands) with deterministic smart accounts and yield pools.
-          </p>
+          
+          <div className="space-y-4 text-slate-400 text-sm leading-relaxed">
+            <p>
+              Before modern banking, communities globally saved together through rotating savings associations. Known traditionally as a <strong>Sou-Sou</strong> in the Caribbean, <strong>Tanda</strong> in Latin America, <strong>Esusu</strong> in West Africa, or <strong>Partnerhand</strong> in the UK.
+            </p>
+            <p>
+              ROSA digitizes this age-old custom. Members contribute a fixed amount each round, and one member takes turns receiving the full pooled pot. By deploying smart accounts and optional smart contract security deposits, we completely eliminate default risk while generating real DeFi yield on idle assets.
+            </p>
+          </div>
 
-          {/* Interactive Tanda Simulator */}
-          <div className="mt-8 p-6 rounded-2xl bg-white/5 border border-white/5 space-y-4 max-w-xl mx-auto lg:mx-0 glass-panel">
-            <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center">
-              <Zap className="h-4 w-4 mr-2 text-emerald-400" />
-              <span>Interactive Tanda Simulator</span>
-            </h3>
-            
-            <div className="grid grid-cols-2 gap-4">
+          {/* Key Pillars */}
+          <div className="grid sm:grid-cols-3 gap-4 text-left pt-2">
+            <div className="p-4 rounded-xl bg-white/5 border border-white/5 space-y-2">
+              <ShieldCheck className="h-5 w-5 text-violet-400" />
+              <h4 className="text-xs font-bold text-white uppercase tracking-wider">Security Deposits</h4>
+              <p className="text-[10px] text-slate-500 leading-tight">Collateral backing protects the pool from default losses.</p>
+            </div>
+            <div className="p-4 rounded-xl bg-white/5 border border-white/5 space-y-2">
+              <TrendingUp className="h-5 w-5 text-emerald-400" />
+              <h4 className="text-xs font-bold text-white uppercase tracking-wider">DeFi Yield Boost</h4>
+              <p className="text-[10px] text-slate-500 leading-tight">Idle deposits earn yield, boosting final payout sizes.</p>
+            </div>
+            <div className="p-4 rounded-xl bg-white/5 border border-white/5 space-y-2">
+              <Zap className="h-5 w-5 text-teal-400" />
+              <h4 className="text-xs font-bold text-white uppercase tracking-wider">Auto Direct Debit</h4>
+              <p className="text-[10px] text-slate-500 leading-tight">Session keys automate direct-debit contributions.</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column - Live Savings Circle Visual Preview */}
+        <div className="flex-1 w-full max-w-xl">
+          <div className="p-6 rounded-3xl space-y-6 glass-panel relative overflow-hidden">
+            {/* Visual Header */}
+            <div className="flex justify-between items-center border-b border-white/5 pb-4">
               <div>
-                <label className="text-[10px] text-slate-400 uppercase tracking-wider block mb-1">Participants: {simMembers}</label>
+                <span className="text-[9px] uppercase tracking-wider font-bold text-emerald-400">Live Simulation</span>
+                <h3 className="font-bold text-white text-base">Interactive Rotating Circle</h3>
+              </div>
+              <span className="text-[10px] font-mono text-slate-400 px-2 py-0.5 rounded bg-white/5 border border-white/5">
+                Esusu / Tanda Circle
+              </span>
+            </div>
+
+            {/* Circular Animation Area */}
+            <div className="flex flex-col md:flex-row items-center justify-around gap-6">
+              
+              {/* Circular SVG map */}
+              <div className="relative w-48 h-48 shrink-0">
+                <svg viewBox="0 0 220 220" className="w-full h-full">
+                  {/* Rotation Path Ring */}
+                  <circle cx="110" cy="110" r="72" fill="none" stroke="rgba(255, 255, 255, 0.08)" strokeWidth="2" strokeDasharray="4 4" />
+                  
+                  {/* Center Pot Indicator */}
+                  <circle cx="110" cy="110" r="36" fill="#030712" stroke="rgba(255, 255, 255, 0.08)" strokeWidth="1" />
+                  <text x="110" y="104" textAnchor="middle" fill="rgba(255, 255, 255, 0.4)" fontSize="8" fontWeight="bold" className="uppercase tracking-wider">Total Pot</text>
+                  <text x="110" y="121" textAnchor="middle" fill="#34d399" fontSize="15" fontWeight="bold">${totalPot}</text>
+                  
+                  {/* Line from center pointing to active payout turn */}
+                  {(() => {
+                    const angle = ((simRound - 1) * 2 * Math.PI) / simMembers - Math.PI / 2;
+                    const x = 110 + 72 * Math.cos(angle);
+                    const y = 110 + 72 * Math.sin(angle);
+                    return (
+                      <>
+                        <line x1="110" y1="110" x2={x} y2={y} stroke="rgba(16, 185, 129, 0.3)" strokeWidth="1.5" strokeDasharray="3 3" />
+                        <circle cx={x} cy={y} r={20} fill="none" stroke="#10b981" strokeWidth="1" className="animate-ping" opacity="0.3" />
+                      </>
+                    );
+                  })()}
+
+                  {/* Render Circle Nodes */}
+                  {activePreviewMembers.map((m, idx) => {
+                    const angle = (idx * 2 * Math.PI) / simMembers - Math.PI / 2;
+                    const x = 110 + 72 * Math.cos(angle);
+                    const y = 110 + 72 * Math.sin(angle);
+                    const isActive = idx === simRound - 1;
+                    const isPaid = idx < simRound - 1;
+
+                    let strokeColor = "rgba(255, 255, 255, 0.15)";
+                    let fill = "rgba(17, 24, 39, 0.9)";
+                    let r = isActive ? 16 : 13;
+
+                    if (isActive) {
+                      strokeColor = "#10b981";
+                      fill = "rgba(16, 185, 129, 0.15)";
+                    } else if (isPaid) {
+                      strokeColor = "#059669";
+                      fill = "rgba(5, 150, 105, 0.05)";
+                    }
+
+                    return (
+                      <g key={idx} className="transition-all duration-300">
+                        <circle cx={x} cy={y} r={r} fill={fill} stroke={strokeColor} strokeWidth={isActive ? 2 : 1.5} />
+                        <text x={x} y={y} textAnchor="middle" dy=".3em" fill={isActive ? "#34d399" : "#fff"} fontSize={isActive ? 9 : 8} fontWeight={isActive ? "bold" : "normal"}>
+                          {m.avatar}
+                        </text>
+                      </g>
+                    );
+                  })}
+                </svg>
+              </div>
+
+              {/* Timeline schedule */}
+              <div className="flex-1 w-full space-y-2.5">
+                <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500 block">Payout Schedule</span>
+                <div className="space-y-2 max-h-44 overflow-y-auto pr-1">
+                  {activePreviewMembers.map((m, idx) => {
+                    const isPaid = idx < simRound - 1;
+                    const isActive = idx === simRound - 1;
+
+                    return (
+                      <div 
+                        key={idx} 
+                        className={`flex items-center justify-between p-2 rounded-xl border transition duration-300 ${
+                          isActive 
+                            ? "bg-emerald-500/10 border-emerald-500/30 shadow-md" 
+                            : "bg-[#030712]/50 border-white/5"
+                        }`}
+                      >
+                        <div className="flex items-center space-x-2">
+                          <span className={`h-4.5 w-4.5 rounded-full flex items-center justify-center text-[9px] font-bold ${
+                            isPaid 
+                              ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/20" 
+                              : isActive 
+                                ? "bg-emerald-500 text-[#030712]" 
+                                : "bg-white/5 text-slate-500"
+                          }`}>
+                            {idx + 1}
+                          </span>
+                          <span className={`text-[11px] font-medium ${isActive ? "text-white" : "text-slate-400"}`}>
+                            {m.name === "You (Member #1)" ? "You" : m.name.split(" ")[0]}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center space-x-1 text-right">
+                          <span className={`text-[11px] font-mono font-bold ${isActive ? "text-emerald-400" : "text-slate-400"}`}>
+                            +${totalPot}
+                          </span>
+                          {isPaid ? (
+                            <span className="text-[8px] uppercase font-bold text-emerald-500/60 ml-1">Paid</span>
+                          ) : isActive ? (
+                            <span className="text-[8px] uppercase font-bold text-amber-400 ml-1 animate-pulse">Now</span>
+                          ) : (
+                            <span className="text-[8px] uppercase font-bold text-slate-600 ml-1">Wait</span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+            </div>
+
+            {/* Parameter Sliders */}
+            <div className="grid md:grid-cols-3 gap-4 pt-4 border-t border-white/5 bg-white/2 rounded-2xl p-4">
+              <div>
+                <label className="text-[9px] text-slate-400 uppercase tracking-wider block mb-1">Members: {simMembers}</label>
                 <input
                   type="range"
                   min="3"
-                  max="8"
+                  max="6"
                   value={simMembers}
                   onChange={(e) => {
                     const val = Number(e.target.value);
                     setSimMembers(val);
                     if (simRound > val) setSimRound(1);
                   }}
-                  className="w-full h-1.5 bg-white/5 rounded-lg appearance-none cursor-pointer accent-violet-500"
+                  className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-violet-500"
                 />
               </div>
               <div>
-                <label className="text-[10px] text-slate-400 uppercase tracking-wider block mb-1">Contribution: ${simContribution}</label>
+                <label className="text-[9px] text-slate-400 uppercase tracking-wider block mb-1">Payment: ${simContribution}</label>
                 <input
                   type="range"
                   min="10"
@@ -296,312 +488,72 @@ export default function Home() {
                   step="10"
                   value={simContribution}
                   onChange={(e) => setSimContribution(Number(e.target.value))}
-                  className="w-full h-1.5 bg-white/5 rounded-lg appearance-none cursor-pointer accent-violet-500"
+                  className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-violet-500"
+                />
+              </div>
+              <div>
+                <label className="text-[9px] text-slate-400 uppercase tracking-wider block mb-1">DeFi APY: {simApy}%</label>
+                <input
+                  type="range"
+                  min="2"
+                  max="12"
+                  step="0.5"
+                  value={simApy}
+                  onChange={(e) => setSimApy(Number(e.target.value))}
+                  className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-violet-500"
                 />
               </div>
             </div>
 
-            <div className="p-4 rounded-xl bg-[#030712]/60 border border-white/5 space-y-3">
-              <div className="flex justify-between items-center text-xs">
-                <span className="text-slate-400">Total Pot per Rotation:</span>
-                <span className="text-emerald-400 font-bold font-mono">${simMembers * simContribution}</span>
+            {/* Calculations Box */}
+            <div className="grid grid-cols-2 gap-4 text-xs p-4 rounded-2xl bg-[#030712]/80 border border-white/5 font-mono">
+              <div>
+                <span className="text-[9px] text-slate-500 block uppercase">Your Turn Payout</span>
+                <span className="text-white font-bold">${totalPot}</span>
               </div>
-
-              {/* Visual Ring of Members */}
-              <div className="flex items-center justify-center space-x-2 py-2">
-                {Array.from({ length: simMembers }).map((_, i) => {
-                  const isCurrent = i === simRound - 1;
-                  return (
-                    <div
-                      key={i}
-                      className={`h-7 w-7 rounded-full flex items-center justify-center text-[10px] font-bold transition duration-300 ${
-                        isCurrent
-                          ? "bg-emerald-500 text-[#030712] shadow-lg shadow-emerald-500/30 scale-110 border border-emerald-400"
-                          : "bg-white/5 text-slate-400 border border-white/5"
-                      }`}
-                    >
-                      {i === 0 ? "You" : `#${i + 1}`}
-                    </div>
-                  );
-                })}
-              </div>
-
-              <div className="flex justify-between items-center text-[11px]">
-                <span className="text-slate-400">
-                  Round {simRound} Payout: <strong className="text-white">{simRound === 1 ? "You receive" : `Member #${simRound} receives`}</strong> the pot!
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setSimRound(prev => (prev % simMembers) + 1)}
-                  className="px-2.5 py-1 bg-violet-600 hover:bg-violet-500 text-white rounded-lg font-semibold transition text-[10px] cursor-pointer"
-                >
-                  Step Round
-                </button>
+              <div>
+                <span className="text-[9px] text-emerald-400 block uppercase">Est. DeFi Yield Earned</span>
+                <span className="text-emerald-400 font-bold">+${estYield.toFixed(2)}</span>
               </div>
             </div>
-          </div>
-        </div>
 
-        {/* Auth Container Card */}
-        <div className="flex-1 w-full max-w-md rounded-3xl p-8 relative shadow-2xl overflow-hidden glass-panel">
-          {generatedRecoveryKey ? (
-            /* Recovery Key Prompt view */
-            <div className="space-y-6">
-              <div className="text-center">
-                <span className="text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 text-xs font-semibold px-3 py-1 rounded-full">
-                  Account Created Successfully
-                </span>
-                <h2 className="text-xl font-bold text-white mt-3">Backup Recovery Key</h2>
-                <p className="text-xs text-slate-400 mt-2">
-                  This key encodes your unique private key. You can use it to sign in to your wallet from any device or recover your account if you forget your password.
-                </p>
-              </div>
-
-              <div className="p-4 bg-[#090D16]/60 border border-white/5 rounded-2xl relative font-mono text-[11px] text-violet-300 leading-relaxed break-all select-all flex justify-between items-center gap-3">
-                <span>{generatedRecoveryKey}</span>
-                <button
-                  type="button"
-                  onClick={handleCopyKey}
-                  className="p-2 bg-white/5 hover:bg-white/10 rounded-lg text-slate-400 hover:text-white transition shrink-0"
-                  title="Copy recovery key"
-                >
-                  {copiedKey ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
-                </button>
-              </div>
-
-              <div className="flex items-start space-x-3 p-3 bg-violet-600/10 border border-violet-500/20 rounded-xl">
+            {/* Simulation Steps Controls */}
+            <div className="flex justify-between items-center gap-3">
+              <div className="flex items-center space-x-2">
                 <input
                   type="checkbox"
-                  id="confirm-backup"
-                  checked={hasConfirmedSave}
-                  onChange={(e) => setHasConfirmedSave(e.target.checked)}
-                  className="mt-1 accent-violet-600"
+                  id="auto-step"
+                  checked={isAutoStepping}
+                  onChange={(e) => setIsAutoStepping(e.target.checked)}
+                  className="h-3.5 w-3.5 text-violet-600 focus:ring-violet-500 border-white/10 bg-[#030712] rounded cursor-pointer"
                 />
-                <label htmlFor="confirm-backup" className="text-xs text-slate-300 cursor-pointer">
-                  I have copied and written down this Recovery Key. I understand that if I lose it, my funds cannot be recovered.
-                </label>
+                <label htmlFor="auto-step" className="text-[10px] text-slate-400 cursor-pointer">Auto-rotate rounds</label>
               </div>
 
               <button
                 type="button"
-                onClick={proceedToDashboard}
-                disabled={!hasConfirmedSave}
-                className="w-full h-12 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 disabled:from-violet-600/30 disabled:to-indigo-600/30 disabled:text-slate-500 text-white font-semibold rounded-xl flex items-center justify-center space-x-2 transition"
+                onClick={() => setSimRound(prev => (prev % simMembers) + 1)}
+                className="px-3 py-1.5 bg-violet-600 hover:bg-violet-500 text-white rounded-xl font-semibold transition text-[10px] cursor-pointer"
               >
-                <span>Go to Dashboard</span>
+                Rotate Round
+              </button>
+            </div>
+
+            {/* Call to Action Button */}
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={() => setShowAuthModal(true)}
+                className="w-full h-12 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-[#030712] font-extrabold text-sm rounded-2xl shadow-lg shadow-emerald-500/10 transition flex items-center justify-center space-x-2 cursor-pointer"
+              >
+                <span>Deploy / Join a Circle Now</span>
                 <ArrowRight className="h-4 w-4" />
               </button>
             </div>
-          ) : (
-            /* standard login/register tabs view */
-            <div className="space-y-6">
-              {/* Tab headers */}
-              <div className="flex border-b border-white/5 pb-2">
-                <button
-                  onClick={() => { setActiveTab("signin"); setIsLoading(false); }}
-                  className={`flex-1 pb-2 text-sm font-semibold transition ${
-                    activeTab === "signin" 
-                      ? "text-white border-b-2 border-violet-500" 
-                      : "text-slate-400 hover:text-white"
-                  }`}
-                >
-                  Sign In
-                </button>
-                <button
-                  onClick={() => { setActiveTab("register"); setIsLoading(false); }}
-                  className={`flex-1 pb-2 text-sm font-semibold transition ${
-                    activeTab === "register" 
-                      ? "text-white border-b-2 border-violet-500" 
-                      : "text-slate-400 hover:text-white"
-                  }`}
-                >
-                  Register
-                </button>
-                <button
-                  onClick={() => { setActiveTab("recover"); setIsLoading(false); }}
-                  className={`flex-1 pb-2 text-sm font-semibold transition ${
-                    activeTab === "recover" 
-                      ? "text-white border-b-2 border-violet-500" 
-                      : "text-slate-400 hover:text-white"
-                  }`}
-                >
-                  Recover
-                </button>
-              </div>
 
-              {activeTab === "signin" && (
-                <form onSubmit={handleSignIn} className="space-y-4">
-                  <div className="space-y-2">
-                    <label className="text-[10px] text-slate-400 uppercase tracking-wider block">Email Address</label>
-                    <div className="relative">
-                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
-                      <input
-                        type="email"
-                        required
-                        placeholder="you@example.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="w-full h-11 pl-11 pr-4 rounded-xl bg-white/5 border border-white/5 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-violet-500/50 glow-input"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-[10px] text-slate-400 uppercase tracking-wider block">Password</label>
-                    <div className="relative">
-                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
-                      <input
-                        type="password"
-                        required
-                        placeholder="••••••••"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="w-full h-11 pl-11 pr-4 rounded-xl bg-white/5 border border-white/5 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-violet-500/50 glow-input"
-                      />
-                    </div>
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={isLoading}
-                    className="w-full h-11 bg-violet-600 hover:bg-violet-500 disabled:bg-violet-600/30 text-white font-semibold text-sm rounded-xl transition flex items-center justify-center"
-                  >
-                    {isLoading ? (
-                      <div className="h-4 w-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                    ) : (
-                      "Sign In"
-                    )}
-                  </button>
-                  <div className="text-center">
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab("recover")}
-                      className="text-xs text-violet-400 hover:underline"
-                    >
-                      Forgot password? Sign in with Recovery Key
-                    </button>
-                  </div>
-                </form>
-              )}
-
-              {activeTab === "register" && (
-                <form onSubmit={handleRegister} className="space-y-4">
-                  <div className="space-y-2">
-                    <label className="text-[10px] text-slate-400 uppercase tracking-wider block">Email Address</label>
-                    <div className="relative">
-                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
-                      <input
-                        type="email"
-                        required
-                        placeholder="you@example.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="w-full h-11 pl-11 pr-4 rounded-xl bg-white/5 border border-white/5 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-violet-500/50 glow-input"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-[10px] text-slate-400 uppercase tracking-wider block">Password</label>
-                    <div className="relative">
-                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
-                      <input
-                        type="password"
-                        required
-                        placeholder="••••••••"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="w-full h-11 pl-11 pr-4 rounded-xl bg-white/5 border border-white/5 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-violet-500/50 glow-input"
-                      />
-                    </div>
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={isLoading}
-                    className="w-full h-11 bg-violet-600 hover:bg-violet-500 disabled:bg-violet-600/30 text-white font-semibold text-sm rounded-xl transition flex items-center justify-center"
-                  >
-                    {isLoading ? (
-                      <div className="h-4 w-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                    ) : (
-                      "Register & Create Wallet"
-                    )}
-                  </button>
-                </form>
-              )}
-
-              {activeTab === "recover" && (
-                <form onSubmit={handleRecover} className="space-y-4">
-                  <div className="space-y-2">
-                    <label className="text-[10px] text-slate-400 uppercase tracking-wider block">Email Address</label>
-                    <div className="relative">
-                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
-                      <input
-                        type="email"
-                        required
-                        placeholder="you@example.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="w-full h-11 pl-11 pr-4 rounded-xl bg-white/5 border border-white/5 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-violet-500/50 glow-input"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-[10px] text-slate-400 uppercase tracking-wider block">Secret Recovery Key</label>
-                    <div className="relative">
-                      <Key className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
-                      <input
-                        type="text"
-                        required
-                        placeholder="ROSA-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX"
-                        value={recoveryKey}
-                        onChange={(e) => setRecoveryKey(e.target.value)}
-                        className="w-full h-11 pl-11 pr-4 rounded-xl bg-white/5 border border-white/5 text-white placeholder-slate-500 text-xs focus:outline-none focus:border-violet-500/50 font-mono glow-input"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-[10px] text-slate-400 uppercase tracking-wider block">Set New Password for this device</label>
-                    <div className="relative">
-                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
-                      <input
-                        type="password"
-                        required
-                        placeholder="••••••••"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="w-full h-11 pl-11 pr-4 rounded-xl bg-white/5 border border-white/5 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-violet-500/50 glow-input"
-                      />
-                    </div>
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={isLoading}
-                    className="w-full h-11 bg-violet-600 hover:bg-violet-500 disabled:bg-violet-600/30 text-white font-semibold text-sm rounded-xl transition flex items-center justify-center"
-                  >
-                    {isLoading ? (
-                      <div className="h-4 w-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                    ) : (
-                      "Recover & Sign In"
-                    )}
-                  </button>
-                  <div className="text-center">
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab("signin")}
-                      className="text-xs text-violet-400 hover:underline"
-                    >
-                      Back to Sign In
-                    </button>
-                  </div>
-                </form>
-              )}
-            </div>
-          )}
+          </div>
         </div>
+
       </main>
 
       {/* Features Section */}
