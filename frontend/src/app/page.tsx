@@ -247,25 +247,25 @@ export default function Home() {
   const estYield = (totalPot / 2) * (simApy / 100) * (simMembers / 12);
 
   return (
-    <div className="flex-1 flex flex-col relative overflow-hidden bg-[#030712]">
+    <div className="flex-1 flex flex-col relative overflow-hidden bg-[#000000]">
       {/* Background glow effects */}
-      <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-violet-600/5 blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] rounded-full bg-emerald-600/5 blur-[150px] pointer-events-none" />
+      <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-[#00C805]/5 blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] rounded-full bg-[#00C805]/3 blur-[150px] pointer-events-none" />
 
       {/* Header */}
-      <header className="sticky top-0 border-b border-white/5 bg-[#030712]/80 backdrop-blur-md z-50">
+      <header className="sticky top-0 border-b border-[#303030] bg-[#000000]/80 backdrop-blur-md z-50">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-violet-600 to-emerald-400 p-[1px]">
-              <div className="h-full w-full bg-[#030712] rounded-[11px] flex items-center justify-center">
-                <Users className="h-5 w-5 text-emerald-400" />
+            <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-[#00C805] to-[#00b004] p-[1px]">
+              <div className="h-full w-full bg-[#000000] rounded-[11px] flex items-center justify-center">
+                <Users className="h-5 w-5 text-[#00C805]" />
               </div>
             </div>
             <div>
-              <span className="text-xl font-bold tracking-tight bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
+              <span className="text-xl font-bold tracking-tight bg-gradient-to-r from-white to-[#8C8C8C] bg-clip-text text-transparent">
                 ROSA
               </span>
-              <span className="ml-2.5 px-2 py-0.5 text-[9px] font-semibold text-emerald-400 bg-emerald-400/10 rounded-full border border-emerald-400/20 uppercase tracking-wide">
+              <span className="ml-2.5 px-2 py-0.5 text-[9px] font-semibold text-[#00C805] bg-[#00C805]/10 rounded-full border border-[#00C805]/20 uppercase tracking-wide">
                 Stylus ROSCA
               </span>
             </div>
@@ -274,7 +274,7 @@ export default function Home() {
             {isLoggedIn ? (
               <Link
                 href="/dashboard"
-                className="px-4 py-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-semibold text-xs rounded-xl shadow-lg shadow-violet-600/15 transition flex items-center space-x-1.5"
+                className="px-4 py-2 bg-[#00C805] hover:bg-[#00b004] text-[#000000] font-extrabold text-xs rounded-xl shadow-lg shadow-emerald-500/15 transition flex items-center space-x-1.5"
               >
                 <span>Dashboard</span>
                 <ArrowRight className="h-3.5 w-3.5" />
@@ -282,7 +282,7 @@ export default function Home() {
             ) : (
               <button
                 onClick={() => setShowAuthModal(true)}
-                className="px-4 py-2 bg-white/5 hover:bg-white/10 text-white font-semibold text-xs rounded-xl border border-white/10 transition cursor-pointer"
+                className="px-4 py-2 bg-[#0A0A0A] hover:bg-white/10 text-white font-semibold text-xs rounded-xl border border-[#303030] transition cursor-pointer"
               >
                 Sign In
               </button>
@@ -300,12 +300,12 @@ export default function Home() {
           
           <h1 className="text-4xl lg:text-6xl font-extrabold tracking-tight leading-tight text-white">
             Save and grow <br />
-            <span className="bg-gradient-to-r from-emerald-400 to-teal-300 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-[#00C805] to-[#00b004] bg-clip-text text-transparent">
               together
             </span>
           </h1>
           
-          <div className="space-y-4 text-slate-400 text-sm leading-relaxed">
+          <div className="space-y-4 text-[#8C8C8C] text-sm leading-relaxed">
             <p>
               Before modern banking, communities globally saved together through rotating savings associations. Known traditionally as a <strong>Sou-Sou</strong> in the Caribbean, <strong>Tanda</strong> in Latin America, <strong>Esusu</strong> in West Africa, or <strong>Partnerhand</strong> in the UK.
             </p>
@@ -328,9 +328,9 @@ export default function Home() {
                 <circle cx="110" cy="110" r="72" fill="none" stroke="rgba(255, 255, 255, 0.08)" strokeWidth="2" strokeDasharray="4 4" />
                 
                 {/* Center Pot Indicator */}
-                <circle cx="110" cy="110" r="36" fill="#030712" stroke="rgba(255, 255, 255, 0.08)" strokeWidth="1" />
+                <circle cx="110" cy="110" r="36" fill="#000000" stroke="rgba(255, 255, 255, 0.08)" strokeWidth="1" />
                 <text x="110" y="104" textAnchor="middle" fill="rgba(255, 255, 255, 0.4)" fontSize="8" fontWeight="bold" className="uppercase tracking-wider">Total Pot</text>
-                <text x="110" y="121" textAnchor="middle" fill="#34d399" fontSize="15" fontWeight="bold">${totalPot}</text>
+                <text x="110" y="121" textAnchor="middle" fill="#00C805" fontSize="15" fontWeight="bold">${totalPot}</text>
                 
                 {/* Line from center pointing to active payout turn */}
                 {(() => {
@@ -339,8 +339,8 @@ export default function Home() {
                   const y = 110 + 72 * Math.sin(angle);
                   return (
                     <>
-                      <line x1="110" y1="110" x2={x} y2={y} stroke="rgba(16, 185, 129, 0.3)" strokeWidth="1.5" strokeDasharray="3 3" />
-                      <circle cx={x} cy={y} r={20} fill="none" stroke="#10b981" strokeWidth="1" opacity="0.3" />
+                      <line x1="110" y1="110" x2={x} y2={y} stroke="rgba(0, 200, 5, 0.3)" strokeWidth="1.5" strokeDasharray="3 3" />
+                      <circle cx={x} cy={y} r={20} fill="none" stroke="#00C805" strokeWidth="1" opacity="0.3" />
                     </>
                   );
                 })()}
@@ -368,7 +368,7 @@ export default function Home() {
                   return (
                     <g key={idx} className="transition-all duration-300">
                       <circle cx={x} cy={y} r={r} fill={fill} stroke={strokeColor} strokeWidth={isActive ? 2 : 1.5} />
-                      <text x={x} y={y} textAnchor="middle" dy=".3em" fill="#fff" fontSize={isActive ? 11 : 10} fontWeight={isActive ? "bold" : "normal"}>
+                      <text x={x} y={y} textAnchor="middle" dy=".3em" fill={isActive ? "#000000" : "#fff"} fontSize={isActive ? 11 : 10} fontWeight={isActive ? "bold" : "normal"}>
                         {m.avatar}
                       </text>
                     </g>
@@ -379,7 +379,7 @@ export default function Home() {
 
             {/* Timeline schedule */}
             <div className="flex-1 w-full space-y-2.5">
-              <span className="text-[11px] uppercase font-bold tracking-wider text-slate-400 block mb-2">Payout Schedule</span>
+              <span className="text-[11px] uppercase font-bold tracking-wider text-[#8C8C8C] block mb-2">Payout Schedule</span>
               <div className="space-y-2 max-h-[230px] overflow-y-auto pr-1">
                 {activePreviewMembers.map((m, idx) => {
                   const isPaid = idx < simRound - 1;
@@ -390,35 +390,35 @@ export default function Home() {
                       key={idx} 
                       className={`flex items-center justify-between p-3.5 rounded-2xl border transition duration-300 ${
                         isActive 
-                          ? "bg-[#10b981]/10 border-[#10b981]/30 shadow-md" 
-                          : "bg-[#030712]/50 border-white/5"
+                          ? "bg-[#00C805]/10 border-[#00C805]/30 shadow-md" 
+                          : "bg-[#000000]/50 border-[#303030]"
                       }`}
                     >
                       <div className="flex items-center space-x-3">
                         <span className={`h-5 w-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
                           isPaid 
-                            ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/20" 
+                            ? "bg-[#00C805]/20 text-[#00C805] border border-[#00C805]/20" 
                             : isActive 
-                              ? "bg-emerald-500 text-[#030712]" 
-                              : "bg-white/5 text-slate-500 border border-white/10"
+                              ? "bg-[#00C805] text-[#000000]" 
+                              : "bg-[#0A0A0A] text-[#8C8C8C] border border-[#303030]"
                         }`}>
                           {idx + 1}
                         </span>
-                        <span className={`text-[12px] font-semibold ${isActive ? "text-white" : "text-slate-400"}`}>
+                        <span className={`text-[12px] font-semibold ${isActive ? "text-white" : "text-[#8C8C8C]"}`}>
                           {m.name === "You (Member #1)" ? "You" : m.name.split(" ")[0]}
                         </span>
                       </div>
 
                       <div className="flex items-center space-x-2 text-right">
-                        <span className={`text-[12px] font-mono font-bold ${isActive ? "text-emerald-400" : "text-slate-400"}`}>
+                        <span className={`text-[12px] font-mono font-bold ${isActive ? "text-[#00C805]" : "text-[#8C8C8C]"}`}>
                           +${totalPot}
                         </span>
                         {isPaid ? (
-                          <span className="text-[8px] uppercase font-bold text-emerald-500/80 ml-1">Paid</span>
+                          <span className="text-[8px] uppercase font-bold text-[#00C805]/80 ml-1">Paid</span>
                         ) : isActive ? (
-                          <span className="text-[8px] uppercase font-bold text-amber-400 ml-1">Now</span>
+                          <span className="text-[8px] uppercase font-bold text-yellow-500 ml-1">Now</span>
                         ) : (
-                          <span className="text-[8px] uppercase font-bold text-slate-600 ml-1">Wait</span>
+                          <span className="text-[8px] uppercase font-bold text-[#8C8C8C] ml-1">Wait</span>
                         )}
                       </div>
                     </div>
@@ -433,36 +433,36 @@ export default function Home() {
       </main>
 
       {/* Features Section */}
-      <section className="border-t border-white/5 bg-[#090D16]/30 backdrop-blur-md py-16 z-10">
+      <section className="border-t border-[#303030] bg-[#000000]/30 backdrop-blur-md py-16 z-10">
         <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-2 lg:grid-cols-4 gap-8">
           <div className="p-6 rounded-2xl glass-panel glass-panel-hover">
-            <Smartphone className="h-8 w-8 text-violet-400 mb-4" />
+            <Smartphone className="h-8 w-8 text-[#8C8C8C] mb-4" />
             <h3 className="text-lg font-bold text-white mb-2">Social / Email Sign-up</h3>
-            <p className="text-sm text-slate-400">
+            <p className="text-sm text-[#8C8C8C]">
               Deterministic recovery keys. Restore your secure smart account on any device.
             </p>
           </div>
 
           <div className="p-6 rounded-2xl glass-panel glass-panel-hover">
-            <Zap className="h-8 w-8 text-emerald-400 mb-4" />
+            <Zap className="h-8 w-8 text-[#00C805] mb-4" />
             <h3 className="text-lg font-bold text-white mb-2">Automated Direct Debit</h3>
-            <p className="text-sm text-slate-400">
+            <p className="text-sm text-[#8C8C8C]">
               Authorise Session Keys once. The pool contract pulls contributions automatically. No reminders needed.
             </p>
           </div>
 
           <div className="p-6 rounded-2xl glass-panel glass-panel-hover">
-            <TrendingUp className="h-8 w-8 text-teal-400 mb-4" />
+            <TrendingUp className="h-8 w-8 text-[#00C805] mb-4" />
             <h3 className="text-lg font-bold text-white mb-2">Yield-Bearing Pools</h3>
-            <p className="text-sm text-slate-400">
+            <p className="text-sm text-[#8C8C8C]">
               Idle capital is deposited into yield strategies. Yield is split back to members when the pot rotates.
             </p>
           </div>
 
           <div className="p-6 rounded-2xl glass-panel glass-panel-hover">
-            <ShieldCheck className="h-8 w-8 text-violet-400 mb-4" />
+            <ShieldCheck className="h-8 w-8 text-[#8C8C8C] mb-4" />
             <h3 className="text-lg font-bold text-white mb-2">Stylus Safety Guard</h3>
-            <p className="text-sm text-slate-400">
+            <p className="text-sm text-[#8C8C8C]">
               Transactions compile to WASM via Rust. Near-native speeds ensure micro-savings groups enjoy penny fees.
             </p>
           </div>
@@ -470,9 +470,9 @@ export default function Home() {
       </section>
 
       {/* Info Warning Alert */}
-      <div className="bg-[#111827]/50 border-t border-white/5 py-4 z-10">
-        <div className="max-w-7xl mx-auto px-6 flex items-center justify-center space-x-2 text-xs text-slate-400 text-center">
-          <Info className="h-4 w-4 text-violet-400 shrink-0" />
+      <div className="bg-[#0A0A0A]/50 border-t border-[#303030] py-4 z-10">
+        <div className="max-w-7xl mx-auto px-6 flex items-center justify-center space-x-2 text-xs text-[#8C8C8C] text-center">
+          <Info className="h-4 w-4 text-[#8C8C8C] shrink-0" />
           <span>ROSA is built for the Robinhood Chain Hackathon, integrating ZeroDev AA and Arbitrum Stylus.</span>
         </div>
       </div>
@@ -480,7 +480,7 @@ export default function Home() {
       {/* Auth Modal Overlay */}
       {showAuthModal && (
         <div className="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center z-50 p-4">
-          <div className="relative w-full max-w-md bg-[#090D16] border border-white/10 rounded-3xl p-8 shadow-2xl space-y-6">
+          <div className="relative w-full max-w-md bg-[#000000] border border-[#303030] rounded-3xl p-8 shadow-2xl space-y-6">
             {/* Close button */}
             <button
               onClick={() => {
@@ -488,7 +488,7 @@ export default function Home() {
                 setGeneratedRecoveryKey("");
                 setHasConfirmedSave(false);
               }}
-              className="absolute top-4 right-4 text-slate-400 hover:text-white transition"
+              className="absolute top-4 right-4 text-[#8C8C8C] hover:text-white transition"
             >
               <span className="sr-only">Close</span>
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -500,21 +500,21 @@ export default function Home() {
               // Recovery Key Presentation screen (after register)
               <div className="space-y-6">
                 <div className="text-center space-y-2">
-                  <div className="h-12 w-12 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto">
-                    <ShieldCheck className="h-6 w-6 text-emerald-400" />
+                  <div className="h-12 w-12 rounded-full bg-[#00C805]/10 flex items-center justify-center mx-auto">
+                    <ShieldCheck className="h-6 w-6 text-[#00C805]" />
                   </div>
                   <h3 className="text-lg font-bold text-white">Save Your Recovery Key</h3>
-                  <p className="text-xs text-slate-400 leading-relaxed">
+                  <p className="text-xs text-[#8C8C8C] leading-relaxed">
                     ROSA uses non-custodial smart accounts. This key is the only way to recover your wallet if you forget your password.
                   </p>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-white/5 border border-white/5 space-y-3">
+                <div className="p-4 rounded-2xl bg-[#0A0A0A] border border-[#303030] space-y-3">
                   <div className="flex justify-between items-center">
-                    <span className="text-[10px] uppercase font-bold text-emerald-400">Secret Recovery Key</span>
+                    <span className="text-[10px] uppercase font-bold text-[#00C805]">Secret Recovery Key</span>
                     <button
                       onClick={handleCopyKey}
-                      className="text-[10px] text-violet-400 hover:text-violet-300 font-semibold flex items-center space-x-1"
+                      className="text-[10px] text-[#8C8C8C] hover:text-[#8C8C8C] font-semibold flex items-center space-x-1"
                     >
                       {copiedKey ? (
                         <>
@@ -529,7 +529,7 @@ export default function Home() {
                       )}
                     </button>
                   </div>
-                  <div className="p-3 bg-[#030712] rounded-xl border border-white/5 font-mono text-xs text-center text-white break-all select-all select-none selection:bg-violet-600/30">
+                  <div className="p-3 bg-[#000000] rounded-xl border border-[#303030] font-mono text-xs text-center text-white break-all select-all select-none selection:bg-violet-600/30">
                     {generatedRecoveryKey}
                   </div>
                 </div>
@@ -540,9 +540,9 @@ export default function Home() {
                     id="confirm-save"
                     checked={hasConfirmedSave}
                     onChange={(e) => setHasConfirmedSave(e.target.checked)}
-                    className="mt-0.5 h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-white/10 bg-[#030712] rounded cursor-pointer"
+                    className="mt-0.5 h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-[#303030] bg-[#000000] rounded cursor-pointer"
                   />
-                  <label htmlFor="confirm-save" className="text-xs text-slate-400 select-none cursor-pointer">
+                  <label htmlFor="confirm-save" className="text-xs text-[#8C8C8C] select-none cursor-pointer">
                     I have saved my secret recovery key and understand that it cannot be recovered if lost.
                   </label>
                 </div>
@@ -550,7 +550,7 @@ export default function Home() {
                 <button
                   onClick={proceedToDashboard}
                   disabled={!hasConfirmedSave}
-                  className="w-full h-11 bg-emerald-500 hover:bg-emerald-400 disabled:bg-emerald-500/30 text-[#030712] font-extrabold text-sm rounded-xl transition flex items-center justify-center cursor-pointer"
+                  className="w-full h-11 bg-[#00C805] hover:bg-[#00b004] disabled:bg-[#00C805]/30 text-[#000000] font-extrabold text-sm rounded-xl transition flex items-center justify-center cursor-pointer"
                 >
                   Proceed to Dashboard
                 </button>
@@ -558,7 +558,7 @@ export default function Home() {
             ) : (
               // Standard auth form (Sign In, Register, Recover tabs)
               <div className="space-y-6">
-                <div className="flex border-b border-white/5 pb-1">
+                <div className="flex border-b border-[#303030] pb-1">
                   {(["signin", "register", "recover"] as const).map((tab) => (
                     <button
                       key={tab}
@@ -570,8 +570,8 @@ export default function Home() {
                       }}
                       className={`flex-1 pb-3 text-xs font-bold uppercase tracking-wider transition ${
                         activeTab === tab
-                          ? "text-emerald-400 border-b-2 border-emerald-400"
-                          : "text-slate-500 hover:text-slate-400"
+                          ? "text-[#00C805] border-b-2 border-emerald-400"
+                          : "text-[#8C8C8C] hover:text-[#8C8C8C]"
                       }`}
                     >
                       {tab === "signin" ? "Sign In" : tab === "register" ? "Register" : "Recover"}
@@ -582,31 +582,31 @@ export default function Home() {
                 {activeTab === "signin" && (
                   <form onSubmit={handleSignIn} className="space-y-4">
                     <div className="space-y-2">
-                      <label className="text-[10px] text-slate-400 uppercase tracking-wider block">Email Address</label>
+                      <label className="text-[10px] text-[#8C8C8C] uppercase tracking-wider block">Email Address</label>
                       <div className="relative">
-                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8C8C8C]" />
                         <input
                           type="email"
                           required
                           placeholder="you@example.com"
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
-                          className="w-full h-11 pl-11 pr-4 rounded-xl bg-white/5 border border-white/5 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-violet-500/50 glow-input"
+                          className="w-full h-11 pl-11 pr-4 rounded-xl bg-[#0A0A0A] border border-[#303030] text-white placeholder-slate-500 text-sm focus:outline-none focus:border-[#00C805]/50 glow-input"
                         />
                       </div>
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-[10px] text-slate-400 uppercase tracking-wider block">Password</label>
+                      <label className="text-[10px] text-[#8C8C8C] uppercase tracking-wider block">Password</label>
                       <div className="relative">
-                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8C8C8C]" />
                         <input
                           type="password"
                           required
                           placeholder="••••••••"
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
-                          className="w-full h-11 pl-11 pr-4 rounded-xl bg-white/5 border border-white/5 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-violet-500/50 glow-input"
+                          className="w-full h-11 pl-11 pr-4 rounded-xl bg-[#0A0A0A] border border-[#303030] text-white placeholder-slate-500 text-sm focus:outline-none focus:border-[#00C805]/50 glow-input"
                         />
                       </div>
                     </div>
@@ -614,7 +614,7 @@ export default function Home() {
                     <button
                       type="submit"
                       disabled={isLoading}
-                      className="w-full h-11 bg-emerald-500 hover:bg-emerald-400 disabled:bg-emerald-500/30 text-[#030712] font-extrabold text-sm rounded-xl transition flex items-center justify-center cursor-pointer"
+                      className="w-full h-11 bg-[#00C805] hover:bg-[#00b004] disabled:bg-[#00C805]/30 text-[#000000] font-extrabold text-sm rounded-xl transition flex items-center justify-center cursor-pointer"
                     >
                       {isLoading ? (
                         <div className="h-4 w-4 border-2 border-[#030712]/20 border-t-[#030712] rounded-full animate-spin" />
@@ -626,7 +626,7 @@ export default function Home() {
                       <button
                         type="button"
                         onClick={() => setActiveTab("recover")}
-                        className="text-xs text-emerald-400 hover:underline"
+                        className="text-xs text-[#00C805] hover:underline"
                       >
                         Forgot password? Sign in with Recovery Key
                       </button>
@@ -637,31 +637,31 @@ export default function Home() {
                 {activeTab === "register" && (
                   <form onSubmit={handleRegister} className="space-y-4">
                     <div className="space-y-2">
-                      <label className="text-[10px] text-slate-400 uppercase tracking-wider block">Email Address</label>
+                      <label className="text-[10px] text-[#8C8C8C] uppercase tracking-wider block">Email Address</label>
                       <div className="relative">
-                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8C8C8C]" />
                         <input
                           type="email"
                           required
                           placeholder="you@example.com"
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
-                          className="w-full h-11 pl-11 pr-4 rounded-xl bg-white/5 border border-white/5 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-violet-500/50 glow-input"
+                          className="w-full h-11 pl-11 pr-4 rounded-xl bg-[#0A0A0A] border border-[#303030] text-white placeholder-slate-500 text-sm focus:outline-none focus:border-[#00C805]/50 glow-input"
                         />
                       </div>
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-[10px] text-slate-400 uppercase tracking-wider block">Password</label>
+                      <label className="text-[10px] text-[#8C8C8C] uppercase tracking-wider block">Password</label>
                       <div className="relative">
-                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8C8C8C]" />
                         <input
                           type="password"
                           required
                           placeholder="••••••••"
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
-                          className="w-full h-11 pl-11 pr-4 rounded-xl bg-white/5 border border-white/5 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-violet-500/50 glow-input"
+                          className="w-full h-11 pl-11 pr-4 rounded-xl bg-[#0A0A0A] border border-[#303030] text-white placeholder-slate-500 text-sm focus:outline-none focus:border-[#00C805]/50 glow-input"
                         />
                       </div>
                     </div>
@@ -669,7 +669,7 @@ export default function Home() {
                     <button
                       type="submit"
                       disabled={isLoading}
-                      className="w-full h-11 bg-emerald-500 hover:bg-emerald-400 disabled:bg-emerald-500/30 text-[#030712] font-extrabold text-sm rounded-xl transition flex items-center justify-center cursor-pointer"
+                      className="w-full h-11 bg-[#00C805] hover:bg-[#00b004] disabled:bg-[#00C805]/30 text-[#000000] font-extrabold text-sm rounded-xl transition flex items-center justify-center cursor-pointer"
                     >
                       {isLoading ? (
                         <div className="h-4 w-4 border-2 border-[#030712]/20 border-t-[#030712] rounded-full animate-spin" />
@@ -683,46 +683,46 @@ export default function Home() {
                 {activeTab === "recover" && (
                   <form onSubmit={handleRecover} className="space-y-4">
                     <div className="space-y-2">
-                      <label className="text-[10px] text-slate-400 uppercase tracking-wider block">Email Address</label>
+                      <label className="text-[10px] text-[#8C8C8C] uppercase tracking-wider block">Email Address</label>
                       <div className="relative">
-                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8C8C8C]" />
                         <input
                           type="email"
                           required
                           placeholder="you@example.com"
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
-                          className="w-full h-11 pl-11 pr-4 rounded-xl bg-white/5 border border-white/5 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-violet-500/50 glow-input"
+                          className="w-full h-11 pl-11 pr-4 rounded-xl bg-[#0A0A0A] border border-[#303030] text-white placeholder-slate-500 text-sm focus:outline-none focus:border-[#00C805]/50 glow-input"
                         />
                       </div>
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-[10px] text-slate-400 uppercase tracking-wider block">Secret Recovery Key</label>
+                      <label className="text-[10px] text-[#8C8C8C] uppercase tracking-wider block">Secret Recovery Key</label>
                       <div className="relative">
-                        <Key className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                        <Key className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8C8C8C]" />
                         <input
                           type="text"
                           required
                           placeholder="ROSA-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX"
                           value={recoveryKey}
                           onChange={(e) => setRecoveryKey(e.target.value)}
-                          className="w-full h-11 pl-11 pr-4 rounded-xl bg-white/5 border border-white/5 text-white placeholder-slate-500 text-xs focus:outline-none focus:border-violet-500/50 font-mono glow-input"
+                          className="w-full h-11 pl-11 pr-4 rounded-xl bg-[#0A0A0A] border border-[#303030] text-white placeholder-slate-500 text-xs focus:outline-none focus:border-[#00C805]/50 font-mono glow-input"
                         />
                       </div>
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-[10px] text-slate-400 uppercase tracking-wider block">Set New Password for this device</label>
+                      <label className="text-[10px] text-[#8C8C8C] uppercase tracking-wider block">Set New Password for this device</label>
                       <div className="relative">
-                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8C8C8C]" />
                         <input
                           type="password"
                           required
                           placeholder="••••••••"
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
-                          className="w-full h-11 pl-11 pr-4 rounded-xl bg-white/5 border border-white/5 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-violet-500/50 glow-input"
+                          className="w-full h-11 pl-11 pr-4 rounded-xl bg-[#0A0A0A] border border-[#303030] text-white placeholder-slate-500 text-sm focus:outline-none focus:border-[#00C805]/50 glow-input"
                         />
                       </div>
                     </div>
@@ -730,7 +730,7 @@ export default function Home() {
                     <button
                       type="submit"
                       disabled={isLoading}
-                      className="w-full h-11 bg-emerald-500 hover:bg-emerald-400 disabled:bg-emerald-500/30 text-[#030712] font-extrabold text-sm rounded-xl transition flex items-center justify-center cursor-pointer"
+                      className="w-full h-11 bg-[#00C805] hover:bg-[#00b004] disabled:bg-[#00C805]/30 text-[#000000] font-extrabold text-sm rounded-xl transition flex items-center justify-center cursor-pointer"
                     >
                       {isLoading ? (
                         <div className="h-4 w-4 border-2 border-[#030712]/20 border-t-[#030712] rounded-full animate-spin" />
@@ -742,7 +742,7 @@ export default function Home() {
                       <button
                         type="button"
                         onClick={() => setActiveTab("signin")}
-                        className="text-xs text-emerald-400 hover:underline"
+                        className="text-xs text-[#00C805] hover:underline"
                       >
                         Back to Sign In
                       </button>
