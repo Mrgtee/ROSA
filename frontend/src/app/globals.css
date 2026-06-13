@@ -36,8 +36,6 @@ body {
 .glass-panel-hover:hover {
   background: rgba(20, 20, 20, 0.8);
   border-color: rgba(0, 200, 5, 0.4); /* Robinhood Neon Green highlight */
-  box-shadow: 0 12px 40px 0 rgba(0, 200, 5, 0.08);
-  transform: translateY(-2px);
 }
 
 /* Scrollbar customization */
@@ -91,5 +89,4 @@ body {
 }
 .glow-input:focus {
   border-color: rgba(0, 200, 5, 0.5); /* Robinhood Neon Green */
-  box-shadow: 0 0 15px rgba(0, 200, 5, 0.15);
 }
