@@ -531,7 +531,7 @@ export default function Dashboard() {
                   Robinhood Faucet
                 </a>
                 <a
-                  href="https://www.paxos.com/testnet-faucet/"
+                  href="https://faucet.paxos.com/?network=robinhood"
                   target="_blank"
                   rel="noreferrer"
                   className="px-3 py-1.5 bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 rounded-xl text-xs font-semibold transition"
