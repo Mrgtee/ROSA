@@ -284,7 +284,7 @@ export default function Home() {
               <span className="text-xl font-bold tracking-tight text-white">
                 ROSA
               </span>
-              <span className="ml-2.5 px-2 py-0.5 text-[9px] font-semibold text-[#00C805] bg-[#00C805]/10 rounded-full border border-[#00C805]/20 uppercase tracking-wide">
+              <span className="ml-2.5 px-2 py-0.5 text-[9px] font-semibold text-[#78D197] bg-transparent rounded-full border border-[#78D197]/40 uppercase tracking-wide">
                 Stylus ROSCA
               </span>
             </div>
@@ -293,7 +293,7 @@ export default function Home() {
             {isLoggedIn ? (
               <Link
                 href="/dashboard"
-                className="px-4 py-2 bg-[#CCFF00] hover:bg-[#b3e600] text-[#000000] font-extrabold text-xs rounded-xl shadow-lg shadow-emerald-500/15 transition flex items-center space-x-1.5 active:scale-95 transition-transform duration-100"
+                className="px-4 py-2 bg-[#CCFF00] hover:bg-[#b3e600] text-[#000000] font-extrabold text-xs rounded-xl transition flex items-center space-x-1.5 active:scale-95 transition-transform duration-100"
               >
                 <span>Dashboard</span>
                 <ArrowRight className="h-3.5 w-3.5" />
@@ -319,7 +319,7 @@ export default function Home() {
           
           <h1 className="text-4xl lg:text-6xl font-extrabold tracking-tight leading-tight text-white">
             Save and grow <br />
-            <span className="text-[#00C805]">
+            <span className="text-[#78D197]">
               together
             </span>
           </h1>
@@ -349,7 +349,7 @@ export default function Home() {
                 {/* Center Pot Indicator */}
                 <circle cx="110" cy="110" r="36" fill="#000000" stroke="rgba(255, 255, 255, 0.08)" strokeWidth="1" />
                 <text x="110" y="104" textAnchor="middle" fill="rgba(255, 255, 255, 0.4)" fontSize="8" fontWeight="bold" className="uppercase tracking-wider">Total Pot</text>
-                <text x="110" y="121" textAnchor="middle" fill="#00C805" fontSize="15" fontWeight="bold">${totalPot}</text>
+                <text x="110" y="121" textAnchor="middle" fill="#78D197" fontSize="15" fontWeight="bold">${totalPot}</text>
                 
                 {/* Line from center pointing to active payout turn */}
                 {(() => {
@@ -358,8 +358,8 @@ export default function Home() {
                   const y = 110 + 72 * Math.sin(angle);
                   return (
                     <>
-                      <line x1="110" y1="110" x2={x} y2={y} stroke="rgba(0, 200, 5, 0.3)" strokeWidth="1.5" strokeDasharray="3 3" />
-                      <circle cx={x} cy={y} r={20} fill="none" stroke="#00C805" strokeWidth="1" opacity="0.3" />
+                      <line x1="110" y1="110" x2={x} y2={y} stroke="rgba(120, 209, 151, 0.3)" strokeWidth="1.5" strokeDasharray="3 3" />
+                      <circle cx={x} cy={y} r={20} fill="none" stroke="#78D197" strokeWidth="1" opacity="0.3" />
                     </>
                   );
                 })()}
@@ -377,17 +377,17 @@ export default function Home() {
                   let r = isActive ? 18 : 15;
 
                   if (isActive) {
-                    strokeColor = "#10b981";
-                    fill = "#10b981";
+                    strokeColor = "#78D197";
+                    fill = "transparent";
                   } else if (isPaid) {
-                    strokeColor = "#10b981";
-                    fill = "rgba(16, 185, 129, 0.1)";
+                    strokeColor = "#78D197";
+                    fill = "transparent";
                   }
 
                   return (
                     <g key={idx} className="transition-all duration-300">
                       <circle cx={x} cy={y} r={r} fill={fill} stroke={strokeColor} strokeWidth={isActive ? 2 : 1.5} />
-                      <text x={x} y={y} textAnchor="middle" dy=".3em" fill={isActive ? "#000000" : "#fff"} fontSize={isActive ? 11 : 10} fontWeight={isActive ? "bold" : "normal"}>
+                      <text x={x} y={y} textAnchor="middle" dy=".3em" fill={isActive ? "#78D197" : "#8C8C8C"} fontSize={isActive ? 11 : 10} fontWeight={isActive ? "bold" : "normal"}>
                         {m.avatar}
                       </text>
                     </g>
@@ -409,16 +409,16 @@ export default function Home() {
                       key={idx} 
                       className={`flex items-center justify-between p-3.5 rounded-2xl border transition duration-300 ${
                         isActive 
-                          ? "bg-[#00C805]/10 border-[#00C805]/30 shadow-md" 
+                          ? "bg-transparent border-[#78D197]" 
                           : "bg-[#000000]/50 border-[#303030]"
                       }`}
                     >
                       <div className="flex items-center space-x-3">
                         <span className={`h-5 w-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
                           isPaid 
-                            ? "bg-[#00C805]/20 text-[#00C805] border border-[#00C805]/20" 
+                            ? "bg-transparent text-[#78D197] border border-[#78D197]/40" 
                             : isActive 
-                              ? "bg-[#00C805] text-[#000000]" 
+                              ? "bg-transparent text-[#78D197] border border-[#78D197]" 
                               : "bg-[#0A0A0A] text-[#8C8C8C] border border-[#303030]"
                         }`}>
                           {idx + 1}
@@ -429,13 +429,13 @@ export default function Home() {
                       </div>
 
                       <div className="flex items-center space-x-2 text-right">
-                        <span className={`text-[12px] font-mono font-bold ${isActive ? "text-[#00C805]" : "text-[#8C8C8C]"}`}>
+                        <span className={`text-[12px] font-mono font-bold ${isActive ? "text-[#78D197]" : "text-[#8C8C8C]"}`}>
                           +${totalPot}
                         </span>
                         {isPaid ? (
-                          <span className="text-[8px] uppercase font-bold text-[#00C805]/80 ml-1">Paid</span>
+                          <span className="text-[8px] uppercase font-bold text-[#78D197] ml-1">Paid</span>
                         ) : isActive ? (
-                          <span className="text-[8px] uppercase font-bold text-yellow-500 ml-1">Now</span>
+                          <span className="text-[8px] uppercase font-bold text-[#78D197] ml-1">Now</span>
                         ) : (
                           <span className="text-[8px] uppercase font-bold text-[#8C8C8C] ml-1">Wait</span>
                         )}
@@ -463,7 +463,7 @@ export default function Home() {
           </div>
 
           <div className="p-6 rounded-2xl glass-panel glass-panel-hover">
-            <Zap className="h-8 w-8 text-[#00C805] mb-4" />
+            <Zap className="h-8 w-8 text-[#78D197] mb-4" />
             <h3 className="text-lg font-bold text-white mb-2">Automated Direct Debit</h3>
             <p className="text-sm text-[#8C8C8C]">
               Authorise Session Keys once. The pool contract pulls contributions automatically. No reminders needed.
@@ -471,7 +471,7 @@ export default function Home() {
           </div>
 
           <div className="p-6 rounded-2xl glass-panel glass-panel-hover">
-            <TrendingUp className="h-8 w-8 text-[#00C805] mb-4" />
+            <TrendingUp className="h-8 w-8 text-[#78D197] mb-4" />
             <h3 className="text-lg font-bold text-white mb-2">Yield-Bearing Pools</h3>
             <p className="text-sm text-[#8C8C8C]">
               Idle capital is deposited into yield strategies. Yield is split back to members when the pot rotates.
@@ -519,8 +519,8 @@ export default function Home() {
               // Recovery Key Presentation screen (after register)
               <div className="space-y-6">
                 <div className="text-center space-y-2">
-                  <div className="h-12 w-12 rounded-full bg-[#00C805]/10 flex items-center justify-center mx-auto">
-                    <ShieldCheck className="h-6 w-6 text-[#00C805]" />
+                  <div className="h-12 w-12 rounded-full border border-[#78D197]/40 flex items-center justify-center mx-auto">
+                    <ShieldCheck className="h-6 w-6 text-[#78D197]" />
                   </div>
                   <h3 className="text-lg font-bold text-white">Save Your Recovery Key</h3>
                   <p className="text-xs text-[#8C8C8C] leading-relaxed">
@@ -530,7 +530,7 @@ export default function Home() {
 
                 <div className="p-4 rounded-2xl bg-[#0A0A0A] border border-[#303030] space-y-3">
                   <div className="flex justify-between items-center">
-                    <span className="text-[10px] uppercase font-bold text-[#00C805]">Secret Recovery Key</span>
+                    <span className="text-[10px] uppercase font-bold text-[#78D197]">Secret Recovery Key</span>
                     <button
                       onClick={handleCopyKey}
                       className="text-[10px] text-[#8C8C8C] hover:text-[#8C8C8C] font-semibold flex items-center space-x-1 active:scale-95 transition-transform duration-100"
@@ -645,7 +645,7 @@ export default function Home() {
                       <button
                         type="button"
                         onClick={() => setActiveTab("recover")}
-                        className="text-xs text-[#00C805] hover:underline"
+                        className="text-xs text-[#78D197] hover:underline"
                       >
                         Forgot password? Sign in with Recovery Key
                       </button>
@@ -665,7 +665,7 @@ export default function Home() {
                           placeholder="you@example.com"
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
-                          className="w-full h-11 pl-11 pr-4 rounded-xl bg-[#0A0A0A] border border-[#303030] text-white placeholder-slate-500 text-sm focus:outline-none focus:border-[#00C805]/50 glow-input"
+                          className="w-full h-11 pl-11 pr-4 rounded-xl bg-[#0A0A0A] border border-[#303030] text-white placeholder-slate-500 text-sm focus:outline-none focus:border-[#78D197]/50 glow-input"
                         />
                       </div>
                     </div>
@@ -680,7 +680,7 @@ export default function Home() {
                           placeholder="••••••••"
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
-                          className="w-full h-11 pl-11 pr-4 rounded-xl bg-[#0A0A0A] border border-[#303030] text-white placeholder-slate-500 text-sm focus:outline-none focus:border-[#00C805]/50 glow-input"
+                          className="w-full h-11 pl-11 pr-4 rounded-xl bg-[#0A0A0A] border border-[#303030] text-white placeholder-slate-500 text-sm focus:outline-none focus:border-[#78D197]/50 glow-input"
                         />
                       </div>
                     </div>
@@ -711,7 +711,7 @@ export default function Home() {
                           placeholder="you@example.com"
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
-                          className="w-full h-11 pl-11 pr-4 rounded-xl bg-[#0A0A0A] border border-[#303030] text-white placeholder-slate-500 text-sm focus:outline-none focus:border-[#00C805]/50 glow-input"
+                          className="w-full h-11 pl-11 pr-4 rounded-xl bg-[#0A0A0A] border border-[#303030] text-white placeholder-slate-500 text-sm focus:outline-none focus:border-[#78D197]/50 glow-input"
                         />
                       </div>
                     </div>
@@ -726,7 +726,7 @@ export default function Home() {
                           placeholder="ROSA-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX"
                           value={recoveryKey}
                           onChange={(e) => setRecoveryKey(e.target.value)}
-                          className="w-full h-11 pl-11 pr-4 rounded-xl bg-[#0A0A0A] border border-[#303030] text-white placeholder-slate-500 text-xs focus:outline-none focus:border-[#00C805]/50 font-mono glow-input"
+                          className="w-full h-11 pl-11 pr-4 rounded-xl bg-[#0A0A0A] border border-[#303030] text-white placeholder-slate-500 text-xs focus:outline-none focus:border-[#78D197]/50 font-mono glow-input"
                         />
                       </div>
                     </div>
@@ -741,7 +741,7 @@ export default function Home() {
                           placeholder="••••••••"
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
-                          className="w-full h-11 pl-11 pr-4 rounded-xl bg-[#0A0A0A] border border-[#303030] text-white placeholder-slate-500 text-sm focus:outline-none focus:border-[#00C805]/50 glow-input"
+                          className="w-full h-11 pl-11 pr-4 rounded-xl bg-[#0A0A0A] border border-[#303030] text-white placeholder-slate-500 text-sm focus:outline-none focus:border-[#78D197]/50 glow-input"
                         />
                       </div>
                     </div>
@@ -761,7 +761,7 @@ export default function Home() {
                       <button
                         type="button"
                         onClick={() => setActiveTab("signin")}
-                        className="text-xs text-[#00C805] hover:underline"
+                        className="text-xs text-[#78D197] hover:underline"
                       >
                         Back to Sign In
                       </button>

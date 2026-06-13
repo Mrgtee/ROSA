@@ -768,12 +768,12 @@ export default function Dashboard() {
           {/* Active Circles Selector */}
           <div className="space-y-4">
             <h2 className="text-lg font-bold text-white flex items-center">
-              <RotateCw className="h-4 w-4 mr-2 text-[#00C805]" />
+              <RotateCw className="h-4 w-4 mr-2 text-[#78D197]" />
               <span>Your Savings Circles</span>
             </h2>
             {loadingCircles && circles.length === 0 ? (
               <div className="flex flex-col items-center justify-center p-12 border border-[#303030] rounded-2xl bg-[#0A0A0A]/10">
-                <div className="h-8 w-8 border-2 border-[#00C805]/20 border-t-violet-500 rounded-full animate-spin mb-4" />
+                <div className="h-8 w-8 border-2 border-[#78D197]/25 border-t-violet-500 rounded-full animate-spin mb-4" />
                 <span className="text-sm text-[#8C8C8C]">Querying smart contract state on {network.chain.name}...</span>
               </div>
             ) : circles.length === 0 ? (
@@ -789,13 +789,13 @@ export default function Dashboard() {
                     onClick={() => setSelectedCircleId(c.id)}
                     className={`p-6 rounded-2xl border text-left transition duration-200 ${
                       c.id === selectedCircleId 
-                        ? "bg-[#00C805]/10 border-[#00C805]/30 shadow-lg shadow-violet-600/5" 
+                        ? "bg-transparent border-[#78D197]" 
                         : "bg-[#0A0A0A] border-[#303030] hover:border-[#303030]"
                     }`}
                   >
                     <div className="flex justify-between items-start mb-4">
                       <h3 className="font-bold text-white">Circle #{c.id}</h3>
-                      <span className="text-[10px] uppercase font-semibold tracking-wider text-[#00C805] bg-[#00C805]/10 px-2 py-0.5 rounded border border-[#00C805]/20">
+                      <span className="text-[10px] uppercase font-semibold tracking-wider text-[#78D197] bg-transparent px-2 py-0.5 rounded border border-[#78D197]/40">
                         {c.period}
                       </span>
                     </div>
@@ -810,7 +810,7 @@ export default function Dashboard() {
                       </div>
                       <div className="flex justify-between text-xs text-[#8C8C8C]">
                         <span>Total Pot</span>
-                        <span className="text-[#00C805] font-semibold">{c.totalPot} {c.tokenSymbol}</span>
+                        <span className="text-[#78D197] font-semibold">{c.totalPot} {c.tokenSymbol}</span>
                       </div>
                     </div>
                   </button>
@@ -829,7 +829,7 @@ export default function Dashboard() {
                   <div className="flex items-center space-x-3">
                     <h2 className="text-xl font-bold text-white">Circle #{activeCircle.id}</h2>
                     {activeCircle.requireCollateral ? (
-                      <span className="text-[10px] text-[#00C805] font-semibold bg-[#00C805]/10 border border-[#00C805]/20 px-2 py-0.5 rounded-full">
+                      <span className="text-[10px] text-[#78D197] font-semibold bg-transparent border border-[#78D197]/40 px-2 py-0.5 rounded-full">
                         Collateral Backed: {activeCircle.collateralAmount} {activeCircle.tokenSymbol}
                       </span>
                     ) : (
@@ -843,7 +843,7 @@ export default function Dashboard() {
                 <div className="flex items-center space-x-3">
                   <div className="text-right">
                     <span className="text-[10px] text-[#8C8C8C] block font-semibold">Invite Code</span>
-                    <span className="text-sm font-mono font-bold text-[#00C805] bg-[#00C805]/5 border border-[#00C805]/10 px-2.5 py-1 rounded-lg">
+                    <span className="text-sm font-mono font-bold text-[#78D197] bg-transparent border border-[#78D197]/40 px-2.5 py-1 rounded-lg">
                       {activeCircle.inviteCode}
                     </span>
                   </div>
@@ -862,7 +862,7 @@ export default function Dashboard() {
                   <button
                     onClick={handleTriggerRotation}
                     disabled={isRotating || activeCircle.members.length === 0}
-                    className="px-4 py-2 bg-[#CCFF00] hover:bg-[#b3e600] disabled:opacity-50 text-[#000000] font-bold text-xs rounded-xl flex items-center space-x-1.5 shadow-md transition cursor-pointer active:scale-95 transition-transform duration-100"
+                    className="px-4 py-2 bg-[#CCFF00] hover:bg-[#b3e600] disabled:opacity-50 text-[#000000] font-bold text-xs rounded-xl flex items-center space-x-1.5 transition cursor-pointer active:scale-95 transition-transform duration-100"
                   >
                     {isRotating ? (
                       <div className="h-3 w-3 border-2 border-[#303030]/20 border-t-black rounded-full animate-spin" />
@@ -912,12 +912,12 @@ export default function Dashboard() {
                             let pulse = false;
 
                             if (isActive) {
-                              strokeColor = "#10b981"; // Active emerald green
-                              fill = "rgba(16, 185, 129, 0.15)";
+                              strokeColor = "#78D197";
+                              fill = "transparent";
                               pulse = true;
                             } else if (isPaid) {
-                              strokeColor = "#059669"; // Paid darker green
-                              fill = "rgba(5, 150, 105, 0.05)";
+                              strokeColor = "#78D197";
+                              fill = "transparent";
                             }
 
                             return (
@@ -928,7 +928,7 @@ export default function Dashboard() {
                                 onMouseLeave={() => setHoveredMember(null)}
                               >
                                 {pulse && (
-                                  <circle cx={x} cy={y} r={radius + 5} fill="none" stroke="#00C805" strokeWidth="1" className="animate-ping" opacity="0.3" />
+                                  <circle cx={x} cy={y} r={radius + 5} fill="none" stroke="#78D197" strokeWidth="1" className="animate-ping" opacity="0.3" />
                                 )}
                                 <circle 
                                   cx={x} 
@@ -943,7 +943,7 @@ export default function Dashboard() {
                                   y={y} 
                                   textAnchor="middle" 
                                   dy=".3em" 
-                                  fill={isActive ? "#34d399" : "#fff"} 
+                                  fill={isActive ? "#78D197" : "#8C8C8C"} 
                                   fontSize={isActive ? 9 : 8} 
                                   fontWeight={isActive ? "bold" : "normal"}
                                 >
@@ -964,7 +964,7 @@ export default function Dashboard() {
                             </span>
                             <span className="text-xs text-white">
                               {activeCircle.members[hoveredMember].hasReceived ? (
-                                <span className="text-[#00C805] font-medium">Already paid this cycle</span>
+                                <span className="text-[#78D197] font-medium">Already paid this cycle</span>
                               ) : hoveredMember === activeCircle.activePayoutIndex ? (
                                 <span className="text-amber-400 font-semibold">★ Next to receive pot</span>
                               ) : (
@@ -976,7 +976,7 @@ export default function Dashboard() {
                           <>
                             <span className="text-[10px] text-[#8C8C8C] uppercase font-bold tracking-wider">Hover nodes for details</span>
                             <span className="text-xs text-[#8C8C8C]">
-                              Active Recipient: <strong className="text-[#00C805]">Member #{activeCircle.activePayoutIndex + 1}</strong>
+                              Active Recipient: <strong className="text-[#78D197]">Member #{activeCircle.activePayoutIndex + 1}</strong>
                             </span>
                           </>
                         )}
@@ -1002,13 +1002,13 @@ export default function Dashboard() {
                     
                     <div className="divide-y divide-white/5">
                       {activeCircle.members.map((m, idx) => (
-                        <div key={idx} className={`grid grid-cols-12 gap-2 px-4 py-3 text-xs items-center transition ${idx === activeCircle.activePayoutIndex ? "bg-[#00C805]/5" : ""}`}>
+                        <div key={idx} className={`grid grid-cols-12 gap-2 px-4 py-3 text-xs items-center transition ${idx === activeCircle.activePayoutIndex ? "border-y border-[#78D197]/40 bg-transparent" : ""}`}>
                           <div className="col-span-4 font-semibold text-white flex items-center space-x-1.5">
                             <span className="truncate">
                               {m.isCurrentUser ? "You" : `Member #${idx + 1}`}
                             </span>
                             {idx === activeCircle.activePayoutIndex && (
-                              <span className="text-[8px] bg-[#00C805]/10 text-[#00C805] border border-[#00C805]/20 px-1 py-0.2 rounded font-bold uppercase tracking-wide">
+                              <span className="text-[8px] bg-transparent text-[#78D197] border border-[#78D197]/40 px-1 py-0.2 rounded font-bold uppercase tracking-wide">
                                 Active
                               </span>
                             )}
@@ -1024,7 +1024,7 @@ export default function Dashboard() {
                           </div>
                           <div className="col-span-2 text-right">
                             {m.hasReceived ? (
-                              <span className="inline-flex items-center text-[10px] font-semibold text-[#00C805] bg-[#00C805]/10 border border-[#00C805]/20 px-2 py-0.5 rounded-full">
+                              <span className="inline-flex items-center text-[10px] font-semibold text-[#78D197] bg-transparent border border-[#78D197]/40 px-2 py-0.5 rounded-full">
                                 Paid Out
                               </span>
                             ) : (
@@ -1047,7 +1047,7 @@ export default function Dashboard() {
           {/* Create Circle */}
           <div className="p-6 rounded-2xl space-y-4 glass-panel">
             <h3 className="font-bold text-white flex items-center">
-              <Plus className="h-4 w-4 mr-2 text-[#00C805]" />
+              <Plus className="h-4 w-4 mr-2 text-[#78D197]" />
               <span>Deploy New ROSA Circle</span>
             </h3>
             <form onSubmit={handleCreateCircle} className="space-y-4">
@@ -1058,7 +1058,7 @@ export default function Dashboard() {
                   value={newCircleName}
                   onChange={(e) => setNewCircleName(e.target.value)}
                   placeholder="e.g., London Devs Circle"
-                  className="w-full h-11 px-4 rounded-xl bg-[#0A0A0A] border border-[#303030] text-white placeholder-slate-500 text-sm focus:outline-none focus:border-[#00C805]/50 glow-input"
+                  className="w-full h-11 px-4 rounded-xl bg-[#0A0A0A] border border-[#303030] text-white placeholder-slate-500 text-sm focus:outline-none focus:border-[#78D197]/50 glow-input"
                 />
               </div>
 
@@ -1069,7 +1069,7 @@ export default function Dashboard() {
                   value={customInviteCode}
                   onChange={(e) => setCustomInviteCode(e.target.value.replace(/[^a-zA-Z0-9]/g, "").toUpperCase())}
                   placeholder="e.g., LONDON-DEVS"
-                  className="w-full h-11 px-4 rounded-xl bg-[#0A0A0A] border border-[#303030] text-white placeholder-slate-500 text-sm focus:outline-none focus:border-[#00C805]/50 glow-input"
+                  className="w-full h-11 px-4 rounded-xl bg-[#0A0A0A] border border-[#303030] text-white placeholder-slate-500 text-sm focus:outline-none focus:border-[#78D197]/50 glow-input"
                 />
                 <span className="text-[9px] text-[#8C8C8C] mt-1 block">
                   Suffix with circle ID is auto-appended. E.g., LONDON-DEVS-[ID]
@@ -1083,7 +1083,7 @@ export default function Dashboard() {
                   value={customTokenAddress}
                   onChange={(e) => setCustomTokenAddress(e.target.value)}
                   placeholder="0x..."
-                  className="w-full h-11 px-4 rounded-xl bg-[#0A0A0A] border border-[#303030] text-white placeholder-slate-500 text-xs focus:outline-none focus:border-[#00C805]/50 font-mono glow-input"
+                  className="w-full h-11 px-4 rounded-xl bg-[#0A0A0A] border border-[#303030] text-white placeholder-slate-500 text-xs focus:outline-none focus:border-[#78D197]/50 font-mono glow-input"
                 />
                 <span className="text-[9px] text-[#8C8C8C] mt-1 block">
                   Defaults to {network.tokenName} on this network.
@@ -1100,7 +1100,7 @@ export default function Dashboard() {
                     type="checkbox"
                     checked={requireCollateral}
                     onChange={(e) => setRequireCollateral(e.target.checked)}
-                    className="h-4.5 w-4.5 text-[#00C805] focus:ring-violet-500 border-[#303030] bg-[#000000] rounded cursor-pointer"
+                    className="h-4.5 w-4.5 text-[#78D197] focus:ring-violet-500 border-[#303030] bg-[#000000] rounded cursor-pointer"
                   />
                 </div>
 
@@ -1111,7 +1111,7 @@ export default function Dashboard() {
                       type="number"
                       value={collateralAmount}
                       onChange={(e) => setCollateralAmount(Number(e.target.value))}
-                      className="w-full h-11 px-4 rounded-xl bg-[#0A0A0A] border border-[#303030] text-white text-sm focus:outline-none focus:border-[#00C805]/50 glow-input"
+                      className="w-full h-11 px-4 rounded-xl bg-[#0A0A0A] border border-[#303030] text-white text-sm focus:outline-none focus:border-[#78D197]/50 glow-input"
                     />
                   </div>
                 )}
@@ -1124,7 +1124,7 @@ export default function Dashboard() {
                     type="number"
                     value={newContribution}
                     onChange={(e) => setNewContribution(Number(e.target.value))}
-                    className="w-full h-11 px-4 rounded-xl bg-[#0A0A0A] border border-[#303030] text-white text-sm focus:outline-none focus:border-[#00C805]/50 glow-input"
+                    className="w-full h-11 px-4 rounded-xl bg-[#0A0A0A] border border-[#303030] text-white text-sm focus:outline-none focus:border-[#78D197]/50 glow-input"
                   />
                 </div>
                 <div>
@@ -1132,7 +1132,7 @@ export default function Dashboard() {
                   <select
                     value={newPeriod}
                     onChange={(e) => setNewPeriod(e.target.value)}
-                    className="w-full h-11 px-3 rounded-xl bg-[#000000] border border-[#303030] text-white text-sm focus:outline-none focus:border-[#00C805]/50 glow-input"
+                    className="w-full h-11 px-3 rounded-xl bg-[#000000] border border-[#303030] text-white text-sm focus:outline-none focus:border-[#78D197]/50 glow-input"
                   >
                     <option value="60">1 Min (Demo)</option>
                     <option value="300">5 Min (Demo)</option>
@@ -1147,7 +1147,7 @@ export default function Dashboard() {
               <button
                 type="submit"
                 disabled={isCreating || !newCircleName.trim()}
-                className="w-full h-11 bg-[#CCFF00] hover:bg-[#b3e600] disabled:opacity-50 text-[#000000] font-extrabold text-sm rounded-xl shadow-lg shadow-emerald-500/10 transition flex items-center justify-center cursor-pointer active:scale-95 transition-transform duration-100"
+                className="w-full h-11 bg-[#CCFF00] hover:bg-[#b3e600] disabled:opacity-50 text-[#000000] font-extrabold text-sm rounded-xl transition flex items-center justify-center cursor-pointer active:scale-95 transition-transform duration-100"
               >
                 {isCreating ? (
                   <div className="h-4 w-4 border-2 border-[#303030] border-t-black rounded-full animate-spin" />
@@ -1165,7 +1165,7 @@ export default function Dashboard() {
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 rounded-full bg-rose-500/80" />
                 <div className="w-3 h-3 rounded-full bg-amber-500/80" />
-                <div className="w-3 h-3 rounded-full bg-[#00C805]/80" />
+                <div className="w-3 h-3 rounded-full bg-[#78D197]/80" />
                 <span className="text-[10px] font-mono text-[#8C8C8C] pl-2">rosa-sh -- smart-wallet-session</span>
               </div>
               <button 
@@ -1195,13 +1195,13 @@ export default function Dashboard() {
                       const timestamp = timeMatch[1];
                       const msg = timeMatch[2];
                       
-                      let badgeColor = "text-[#00C805] border-[#00C805]/30 bg-[#00C805]/10";
+                      let badgeColor = "text-[#78D197] border-[#78D197]/30 bg-transparent";
                       let msgColor = "text-slate-300";
                       let tag = "SYSTEM";
 
                       if (msg.toLowerCase().includes("success") || msg.toLowerCase().includes("succeeded")) {
-                        badgeColor = "text-[#00C805] border-[#00C805]/30 bg-[#00C805]/10";
-                        msgColor = "text-[#00C805]/95";
+                        badgeColor = "text-[#78D197] border-[#78D197]/30 bg-transparent";
+                        msgColor = "text-[#78D197]/95";
                         tag = "SUCCESS";
                       } else if (msg.toLowerCase().includes("error") || msg.toLowerCase().includes("failed")) {
                         badgeColor = "text-rose-400 border-rose-500/30 bg-rose-500/10";
@@ -1267,7 +1267,7 @@ export default function Dashboard() {
                     const conf = getNetworkConfig(chainIdVal);
                     setWithdrawTokenAddress(conf.tokenAddress);
                   }}
-                  className="w-full h-11 px-3 rounded-xl bg-[#000000] border border-[#303030] text-white text-xs focus:outline-none focus:border-[#00C805]/50"
+                  className="w-full h-11 px-3 rounded-xl bg-[#000000] border border-[#303030] text-white text-xs focus:outline-none focus:border-[#78D197]/50"
                 >
                   <option value={46630}>Robinhood Chain Testnet (USDG)</option>
                   <option value={421614}>Arbitrum Sepolia (USDC)</option>
@@ -1282,7 +1282,7 @@ export default function Dashboard() {
                   onChange={(e) => setWithdrawRecipient(e.target.value)}
                   placeholder="0x..."
                   required
-                  className="w-full h-11 px-4 rounded-xl bg-[#0A0A0A] border border-[#303030] text-white placeholder-slate-500 text-xs focus:outline-none focus:border-[#00C805]/50 font-mono"
+                  className="w-full h-11 px-4 rounded-xl bg-[#0A0A0A] border border-[#303030] text-white placeholder-slate-500 text-xs focus:outline-none focus:border-[#78D197]/50 font-mono"
                 />
               </div>
 
@@ -1294,7 +1294,7 @@ export default function Dashboard() {
                     value={withdrawAmount}
                     onChange={(e) => setWithdrawAmount(Number(e.target.value))}
                     required
-                    className="w-full h-11 px-4 rounded-xl bg-[#0A0A0A] border border-[#303030] text-white text-xs focus:outline-none focus:border-[#00C805]/50"
+                    className="w-full h-11 px-4 rounded-xl bg-[#0A0A0A] border border-[#303030] text-white text-xs focus:outline-none focus:border-[#78D197]/50"
                   />
                 </div>
                 <div>
@@ -1304,7 +1304,7 @@ export default function Dashboard() {
                     value={withdrawTokenAddress}
                     onChange={(e) => setWithdrawTokenAddress(e.target.value)}
                     placeholder="0x..."
-                    className="w-full h-11 px-4 rounded-xl bg-[#0A0A0A] border border-[#303030] text-white placeholder-slate-500 text-xs focus:outline-none focus:border-[#00C805]/50 font-mono"
+                    className="w-full h-11 px-4 rounded-xl bg-[#0A0A0A] border border-[#303030] text-white placeholder-slate-500 text-xs focus:outline-none focus:border-[#78D197]/50 font-mono"
                   />
                 </div>
               </div>
@@ -1312,7 +1312,7 @@ export default function Dashboard() {
               <button
                 type="submit"
                 disabled={isWithdrawing || !withdrawRecipient.trim()}
-                className="w-full h-11 bg-[#CCFF00] hover:bg-[#b3e600] disabled:opacity-50 text-[#000000] font-extrabold text-sm rounded-xl shadow-lg shadow-emerald-500/10 transition flex items-center justify-center cursor-pointer active:scale-95 transition-transform duration-100"
+                className="w-full h-11 bg-[#CCFF00] hover:bg-[#b3e600] disabled:opacity-50 text-[#000000] font-extrabold text-sm rounded-xl transition flex items-center justify-center cursor-pointer active:scale-95 transition-transform duration-100"
               >
                 {isWithdrawing ? (
                   <div className="h-4 w-4 border-2 border-[#303030] border-t-black rounded-full animate-spin" />
