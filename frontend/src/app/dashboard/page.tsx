@@ -522,7 +522,7 @@ export default function Dashboard() {
             )}
             <button
               onClick={handleCopyAddress}
-              className="hidden sm:flex items-center space-x-2 border border-[#303030] px-3 py-1.5 rounded-xl bg-[#0A0A0A] hover:bg-white/10 hover:border-[#303030] transition cursor-pointer text-left focus:outline-none"
+              className="hidden sm:flex items-center space-x-2 border border-[#303030] px-3 py-1.5 rounded-xl bg-[#0A0A0A] hover:bg-white/10 hover:border-[#303030] transition cursor-pointer text-left focus:outline-none active:scale-95 transition-transform duration-100"
               title="Copy Smart Wallet Address"
             >
               <Wallet className="h-4 w-4 text-[#00C805]" />
@@ -551,14 +551,14 @@ export default function Dashboard() {
             <button
               onClick={refreshOnChainData}
               disabled={loadingCircles}
-              className="p-2 text-[#8C8C8C] hover:text-white rounded-lg hover:bg-[#0A0A0A] transition"
+              className="p-2 text-[#8C8C8C] hover:text-white rounded-lg hover:bg-[#0A0A0A] transition active:scale-95 transition-transform duration-100"
               title="Refresh blockchain data"
             >
               <RefreshCw className={`h-4 w-4 ${loadingCircles ? "animate-spin" : ""}`} />
             </button>
             <Link 
               href="/"
-              className="p-2 text-[#8C8C8C] hover:text-white rounded-lg hover:bg-[#0A0A0A] transition"
+              className="p-2 text-[#8C8C8C] hover:text-white rounded-lg hover:bg-[#0A0A0A] transition active:scale-95 transition-transform duration-100"
             >
               <LogOut className="h-4 w-4" />
             </Link>
@@ -811,7 +811,7 @@ export default function Dashboard() {
                     <button
                       onClick={handleExitCircle}
                       disabled={isExiting}
-                      className="px-4 py-2 border border-red-500/30 bg-red-500/5 hover:bg-red-500/10 text-red-400 font-bold text-xs rounded-xl flex items-center space-x-1.5 transition cursor-pointer"
+                      className="px-4 py-2 border border-red-500/30 bg-red-500/5 hover:bg-red-500/10 text-red-400 font-bold text-xs rounded-xl flex items-center space-x-1.5 transition cursor-pointer active:scale-95 transition-transform duration-100"
                     >
                       {isExiting ? (
                         <div className="h-3 w-3 border-2 border-red-400/20 border-t-red-400 rounded-full animate-spin" />
@@ -822,7 +822,7 @@ export default function Dashboard() {
                   <button
                     onClick={handleTriggerRotation}
                     disabled={isRotating || activeCircle.members.length === 0}
-                    className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 disabled:from-emerald-500/30 disabled:to-teal-500/30 disabled:text-[#8C8C8C] text-[#000000] font-bold text-xs rounded-xl flex items-center space-x-1.5 shadow-md shadow-emerald-500/10 transition cursor-pointer"
+                    className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 disabled:from-emerald-500/30 disabled:to-teal-500/30 disabled:text-[#8C8C8C] text-[#000000] font-bold text-xs rounded-xl flex items-center space-x-1.5 shadow-md shadow-emerald-500/10 transition cursor-pointer active:scale-95 transition-transform duration-100"
                   >
                     {isRotating ? (
                       <div className="h-3 w-3 border-2 border-[#303030]/20 border-t-[#090D16] rounded-full animate-spin" />
@@ -1105,7 +1105,7 @@ export default function Dashboard() {
               <button
                 type="submit"
                 disabled={isCreating || !newCircleName.trim()}
-                className="w-full h-11 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 disabled:from-violet-600/30 disabled:to-indigo-600/30 disabled:text-[#8C8C8C] text-white font-semibold text-sm rounded-xl shadow-lg shadow-violet-600/15 transition flex items-center justify-center cursor-pointer"
+                className="w-full h-11 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 disabled:from-violet-600/30 disabled:to-indigo-600/30 disabled:text-[#8C8C8C] text-white font-semibold text-sm rounded-xl shadow-lg shadow-violet-600/15 transition flex items-center justify-center cursor-pointer active:scale-95 transition-transform duration-100"
               >
                 {isCreating ? (
                   <div className="h-4 w-4 border-2 border-[#303030] border-t-white rounded-full animate-spin" />
@@ -1273,7 +1273,7 @@ export default function Dashboard() {
               <button
                 type="submit"
                 disabled={isWithdrawing || !withdrawRecipient.trim()}
-                className="w-full h-11 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 disabled:from-red-600/30 disabled:to-rose-600/30 disabled:text-[#8C8C8C] text-white font-semibold text-sm rounded-xl shadow-lg shadow-red-600/15 transition flex items-center justify-center cursor-pointer"
+                className="w-full h-11 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 disabled:from-red-600/30 disabled:to-rose-600/30 disabled:text-[#8C8C8C] text-white font-semibold text-sm rounded-xl shadow-lg shadow-red-600/15 transition flex items-center justify-center cursor-pointer active:scale-95 transition-transform duration-100"
               >
                 {isWithdrawing ? (
                   <div className="h-4 w-4 border-2 border-[#303030] border-t-white rounded-full animate-spin" />

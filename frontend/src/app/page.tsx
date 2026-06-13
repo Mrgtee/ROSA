@@ -274,7 +274,7 @@ export default function Home() {
             {isLoggedIn ? (
               <Link
                 href="/dashboard"
-                className="px-4 py-2 bg-[#00C805] hover:bg-[#00b004] text-[#000000] font-extrabold text-xs rounded-xl shadow-lg shadow-emerald-500/15 transition flex items-center space-x-1.5"
+                className="px-4 py-2 bg-[#00C805] hover:bg-[#00b004] text-[#000000] font-extrabold text-xs rounded-xl shadow-lg shadow-emerald-500/15 transition flex items-center space-x-1.5 active:scale-95 transition-transform duration-100"
               >
                 <span>Dashboard</span>
                 <ArrowRight className="h-3.5 w-3.5" />
@@ -514,7 +514,7 @@ export default function Home() {
                     <span className="text-[10px] uppercase font-bold text-[#00C805]">Secret Recovery Key</span>
                     <button
                       onClick={handleCopyKey}
-                      className="text-[10px] text-[#8C8C8C] hover:text-[#8C8C8C] font-semibold flex items-center space-x-1"
+                      className="text-[10px] text-[#8C8C8C] hover:text-[#8C8C8C] font-semibold flex items-center space-x-1 active:scale-95 transition-transform duration-100"
                     >
                       {copiedKey ? (
                         <>
@@ -550,7 +550,7 @@ export default function Home() {
                 <button
                   onClick={proceedToDashboard}
                   disabled={!hasConfirmedSave}
-                  className="w-full h-11 bg-[#00C805] hover:bg-[#00b004] disabled:bg-[#00C805]/30 text-[#000000] font-extrabold text-sm rounded-xl transition flex items-center justify-center cursor-pointer"
+                  className="w-full h-11 bg-[#00C805] hover:bg-[#00b004] disabled:bg-[#00C805]/30 text-[#000000] font-extrabold text-sm rounded-xl transition flex items-center justify-center cursor-pointer active:scale-95 transition-transform duration-100"
                 >
                   Proceed to Dashboard
                 </button>
@@ -614,7 +614,7 @@ export default function Home() {
                     <button
                       type="submit"
                       disabled={isLoading}
-                      className="w-full h-11 bg-[#00C805] hover:bg-[#00b004] disabled:bg-[#00C805]/30 text-[#000000] font-extrabold text-sm rounded-xl transition flex items-center justify-center cursor-pointer"
+                      className="w-full h-11 bg-[#00C805] hover:bg-[#00b004] disabled:bg-[#00C805]/30 text-[#000000] font-extrabold text-sm rounded-xl transition flex items-center justify-center cursor-pointer active:scale-95 transition-transform duration-100"
                     >
                       {isLoading ? (
                         <div className="h-4 w-4 border-2 border-[#030712]/20 border-t-[#030712] rounded-full animate-spin" />
@@ -669,7 +669,7 @@ export default function Home() {
                     <button
                       type="submit"
                       disabled={isLoading}
-                      className="w-full h-11 bg-[#00C805] hover:bg-[#00b004] disabled:bg-[#00C805]/30 text-[#000000] font-extrabold text-sm rounded-xl transition flex items-center justify-center cursor-pointer"
+                      className="w-full h-11 bg-[#00C805] hover:bg-[#00b004] disabled:bg-[#00C805]/30 text-[#000000] font-extrabold text-sm rounded-xl transition flex items-center justify-center cursor-pointer active:scale-95 transition-transform duration-100"
                     >
                       {isLoading ? (
                         <div className="h-4 w-4 border-2 border-[#030712]/20 border-t-[#030712] rounded-full animate-spin" />
@@ -730,7 +730,7 @@ export default function Home() {
                     <button
                       type="submit"
                       disabled={isLoading}
-                      className="w-full h-11 bg-[#00C805] hover:bg-[#00b004] disabled:bg-[#00C805]/30 text-[#000000] font-extrabold text-sm rounded-xl transition flex items-center justify-center cursor-pointer"
+                      className="w-full h-11 bg-[#00C805] hover:bg-[#00b004] disabled:bg-[#00C805]/30 text-[#000000] font-extrabold text-sm rounded-xl transition flex items-center justify-center cursor-pointer active:scale-95 transition-transform duration-100"
                     >
                       {isLoading ? (
                         <div className="h-4 w-4 border-2 border-[#030712]/20 border-t-[#030712] rounded-full animate-spin" />
