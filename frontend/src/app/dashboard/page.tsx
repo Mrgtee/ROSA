@@ -482,9 +482,11 @@ export default function Dashboard() {
   const totalYield = circles.reduce((sum, c) => sum + c.yieldEarned, 0);
 
   return (
-    <div className="flex-1 flex flex-col bg-[#000000] relative overflow-hidden">
+    <div className="flex-1 flex flex-col bg-[#000000] relative">
       {/* Background glow */}
-      <div className="absolute top-[-10%] right-[-10%] w-[400px] h-[400px] rounded-full bg-[#00C805]/5 blur-[100px] pointer-events-none" />
+      <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+        <div className="absolute top-[-10%] right-[-10%] w-[400px] h-[400px] rounded-full bg-[#00C805]/5 blur-[100px]" />
+      </div>
 
       {/* Header */}
       <header className="sticky top-0 border-b border-[#303030] bg-[#000000] z-50">

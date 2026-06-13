@@ -247,10 +247,12 @@ export default function Home() {
   const estYield = (totalPot / 2) * (simApy / 100) * (simMembers / 12);
 
   return (
-    <div className="flex-1 flex flex-col relative overflow-hidden bg-[#000000]">
+    <div className="flex-1 flex flex-col relative bg-[#000000]">
       {/* Background glow effects */}
-      <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-[#00C805]/5 blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] rounded-full bg-[#00C805]/3 blur-[150px] pointer-events-none" />
+      <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+        <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-[#00C805]/5 blur-[120px]" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] rounded-full bg-[#00C805]/3 blur-[150px]" />
+      </div>
 
       {/* Header */}
       <header className="sticky top-0 border-b border-[#303030] bg-[#000000] z-50">
