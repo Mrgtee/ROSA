@@ -90,6 +90,7 @@ export interface OnChainMember {
   yieldEarned: number;
   isCurrentUser: boolean;
   collateralBalance: number;
+  name?: string;
 }
 
 export interface OnChainCircle {
@@ -108,6 +109,7 @@ export interface OnChainCircle {
   isActive: boolean;
   requireCollateral: boolean;
   collateralAmount: number;
+  creatorName?: string;
 }
 
 // Fetch all circles and their details from the blockchain dynamically based on Chain ID
@@ -172,6 +174,16 @@ export async function fetchOnChainCircles(chainId: number, userAddress: string):
           const [hasReceived, missed, yieldEarned, isMember, collateralBalance] = mInfo;
 
           if (isMember) {
+            let memberName = "";
+            if (typeof window !== "undefined") {
+              try {
+                const namesMap = JSON.parse(localStorage.getItem("rosa_member_names") || "{}");
+                memberName = namesMap[`${chainId}_${i}_${mAddr.toLowerCase()}`] || "";
+              } catch (e) {
+                console.error("Error loading member name:", e);
+              }
+            }
+
             members.push({
               address: mAddr,
               hasReceived,
@@ -179,11 +191,13 @@ export async function fetchOnChainCircles(chainId: number, userAddress: string):
               yieldEarned: Number(yieldEarned) / 10**6, // assuming 6 decimals
               isCurrentUser: mAddr.toLowerCase() === userAddress.toLowerCase(),
               collateralBalance: Number(collateralBalance) / 10**6,
+              name: memberName,
             });
           }
         }
 
         let inviteCode = `ROSA-${i}`;
+        let creatorName = "";
         if (typeof window !== "undefined") {
           try {
             const inviteCodeMap = JSON.parse(localStorage.getItem("rosa_circle_invite_codes") || "{}");
@@ -191,8 +205,11 @@ export async function fetchOnChainCircles(chainId: number, userAddress: string):
             if (savedPrefix) {
               inviteCode = `${savedPrefix}-${i}`;
             }
+
+            const creatorsMap = JSON.parse(localStorage.getItem("rosa_circle_creators") || "{}");
+            creatorName = creatorsMap[`${chainId}_${i}`] || "";
           } catch (e) {
-            console.error("Error loading invite code prefix:", e);
+            console.error("Error loading invite code prefix/creator name:", e);
           }
         }
 
@@ -238,6 +255,7 @@ export async function fetchOnChainCircles(chainId: number, userAddress: string):
           isActive,
           requireCollateral,
           collateralAmount: Number(collateralAmount) / 10**6,
+          creatorName,
         });
       } catch (circleErr) {
         console.error(`Error fetching details for circle ${i}:`, circleErr);
