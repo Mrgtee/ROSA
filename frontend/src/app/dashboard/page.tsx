@@ -48,11 +48,13 @@ export default function Dashboard() {
 
   // Form states
   const [newCircleName, setNewCircleName] = useState("");
+  const [newCreatorName, setNewCreatorName] = useState("");
   const [newContribution, setNewContribution] = useState(10);
   const [newPeriod, setNewPeriod] = useState("60"); // default 1 Min for demo
   const [customTokenAddress, setCustomTokenAddress] = useState("");
   const [customInviteCode, setCustomInviteCode] = useState(""); // custom invite code prefix
   const [joinInviteCode, setJoinInviteCode] = useState("");
+  const [joinMemberName, setJoinMemberName] = useState("");
   const [userEmail, setUserEmail] = useState<string>("");
 
   // Withdraw states
@@ -213,11 +215,12 @@ export default function Dashboard() {
   // 1. Join circle via invite code (e.g. ROSA-1 or MY-CIRCLE-5)
   const handleJoinCircle = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!joinInviteCode.trim() || !userAddress) return;
+    if (!joinInviteCode.trim() || !joinMemberName.trim() || !userAddress) return;
 
     setIsJoining(true);
     const code = joinInviteCode.trim().toUpperCase();
-    logSim(`Attempting to join circle with code: ${code}...`);
+    const memberName = joinMemberName.trim();
+    logSim(`Attempting to join circle with code: ${code} as member: ${memberName}...`);
 
     const codeParts = code.split("-");
     const circleIdStr = codeParts[codeParts.length - 1];
@@ -290,7 +293,17 @@ export default function Dashboard() {
         localStorage.setItem("rosa_circle_invite_codes", JSON.stringify(inviteCodeMap));
       }
 
+      // Save member name to localStorage
+      try {
+        const namesMap = JSON.parse(localStorage.getItem("rosa_member_names") || "{}");
+        namesMap[`${selectedChainId}_${circleIdNum}_${userAddress.toLowerCase()}`] = memberName;
+        localStorage.setItem("rosa_member_names", JSON.stringify(namesMap));
+      } catch (e) {
+        console.error("Error saving member name:", e);
+      }
+
       setJoinInviteCode("");
+      setJoinMemberName("");
       await refreshOnChainData();
       setSelectedCircleId(circleIdVal.toString());
     } catch (err: any) {
@@ -304,10 +317,10 @@ export default function Dashboard() {
   // 2. Create new circle
   const handleCreateCircle = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newCircleName.trim() || !userAddress) return;
+    if (!newCircleName.trim() || !newCreatorName.trim() || !userAddress) return;
 
     setIsCreating(true);
-    logSim(`Deploying new ROSA Circle: ${newCircleName}...`);
+    logSim(`Deploying new ROSA Circle: ${newCircleName} by creator: ${newCreatorName.trim()}...`);
 
     try {
       const client = getPublicClient(selectedChainId);
@@ -352,6 +365,15 @@ export default function Dashboard() {
       inviteCodeMap[`${selectedChainId}_${newCircleId}`] = prefix;
       localStorage.setItem("rosa_circle_invite_codes", JSON.stringify(inviteCodeMap));
 
+      // Save creator name mapping to localStorage
+      try {
+        const creatorsMap = JSON.parse(localStorage.getItem("rosa_circle_creators") || "{}");
+        creatorsMap[`${selectedChainId}_${newCircleId}`] = newCreatorName.trim();
+        localStorage.setItem("rosa_circle_creators", JSON.stringify(creatorsMap));
+      } catch (e) {
+        console.error("Error saving creator name:", e);
+      }
+
       // Save deployed circle ID to localStorage for filtering
       const deployedMap = JSON.parse(localStorage.getItem("rosa_deployed_circles") || "{}");
       if (!deployedMap[selectedChainId]) {
@@ -362,6 +384,7 @@ export default function Dashboard() {
 
       logSim(`Circle #${newCircleId} created with invite code: ${prefix}-${newCircleId}`);
       setNewCircleName("");
+      setNewCreatorName("");
       setCustomInviteCode("");
       await refreshOnChainData();
     } catch (err: any) {
@@ -739,8 +762,13 @@ export default function Dashboard() {
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div className="space-y-1">
                   <span className="text-xs text-[#8C8C8C] block uppercase tracking-wider">Active Circle Focus</span>
-                  <div className="flex items-center space-x-3">
+                  <div className="flex items-center space-x-3 flex-wrap gap-y-1.5">
                     <h2 className="text-xl font-bold text-white">Circle #{activeCircle.id}</h2>
+                    {activeCircle.creatorName && (
+                      <span className="text-[10px] text-[#8C8C8C] font-semibold bg-[#0A0A0A] border border-[#303030] px-2 py-0.5 rounded-full">
+                        Creator: {activeCircle.creatorName}
+                      </span>
+                    )}
                     {activeCircle.requireCollateral ? (
                       <span className="text-[10px] text-[#78D197] font-semibold bg-transparent border border-[#78D197]/40 px-2 py-0.5 rounded-full">
                         Collateral Backed: {activeCircle.collateralAmount} {activeCircle.tokenSymbol}
@@ -857,10 +885,10 @@ export default function Dashboard() {
                                   textAnchor="middle" 
                                   dy=".3em" 
                                   fill={isActive ? "#78D197" : "#8C8C8C"} 
-                                  fontSize={isActive ? 9 : 8} 
+                                  fontSize={isActive ? 8 : 7} 
                                   fontWeight={isActive ? "bold" : "normal"}
                                 >
-                                  {m.isCurrentUser ? "You" : `#${idx + 1}`}
+                                  {m.name ? (m.name.length > 5 ? `${m.name.slice(0, 4)}.` : m.name) : (m.isCurrentUser ? "You" : `#${idx + 1}`)}
                                 </text>
                               </g>
                             );
@@ -873,7 +901,9 @@ export default function Dashboard() {
                         {hoveredMember !== null ? (
                           <>
                             <span className="text-[10px] uppercase font-bold tracking-wider text-[#8C8C8C]">
-                              {activeCircle.members[hoveredMember].isCurrentUser ? "You" : `Member #${hoveredMember + 1}`} ({activeCircle.members[hoveredMember].address.slice(0, 6)}...{activeCircle.members[hoveredMember].address.slice(-4)})
+                              {activeCircle.members[hoveredMember].name 
+                                ? `${activeCircle.members[hoveredMember].name}${activeCircle.members[hoveredMember].isCurrentUser ? " (You)" : ""}` 
+                                : (activeCircle.members[hoveredMember].isCurrentUser ? "You" : `Member #${hoveredMember + 1}`)} ({activeCircle.members[hoveredMember].address.slice(0, 6)}...{activeCircle.members[hoveredMember].address.slice(-4)})
                             </span>
                             <span className="text-xs text-white">
                               {activeCircle.members[hoveredMember].hasReceived ? (
@@ -889,7 +919,7 @@ export default function Dashboard() {
                           <>
                             <span className="text-[10px] text-[#8C8C8C] uppercase font-bold tracking-wider">Hover nodes for details</span>
                             <span className="text-xs text-[#8C8C8C]">
-                              Active Recipient: <strong className="text-[#78D197]">Member #{activeCircle.activePayoutIndex + 1}</strong>
+                              Active Recipient: <strong className="text-[#78D197]">{activeCircle.members[activeCircle.activePayoutIndex]?.name || `Member #${activeCircle.activePayoutIndex + 1}`}</strong>
                             </span>
                           </>
                         )}
@@ -918,7 +948,7 @@ export default function Dashboard() {
                         <div key={idx} className={`grid grid-cols-12 gap-2 px-4 py-3 text-xs items-center transition ${idx === activeCircle.activePayoutIndex ? "border-y border-[#78D197]/40 bg-transparent" : ""}`}>
                           <div className="col-span-4 font-semibold text-white flex items-center space-x-1.5">
                             <span className="truncate">
-                              {m.isCurrentUser ? "You" : `Member #${idx + 1}`}
+                              {m.name ? `${m.name}${m.isCurrentUser ? " (You)" : ""}` : (m.isCurrentUser ? "You" : `Member #${idx + 1}`)}
                             </span>
                             {idx === activeCircle.activePayoutIndex && (
                               <span className="text-[8px] bg-transparent text-[#78D197] border border-[#78D197]/40 px-1 py-0.2 rounded font-bold uppercase tracking-wide">
@@ -971,6 +1001,17 @@ export default function Dashboard() {
                 </p>
                 <form onSubmit={handleJoinCircle} className="space-y-4">
                   <div>
+                    <label className="text-[10px] text-[#8C8C8C] uppercase tracking-wider block mb-1.5 font-semibold">Your Name</label>
+                    <input
+                      type="text"
+                      value={joinMemberName}
+                      onChange={(e) => setJoinMemberName(e.target.value)}
+                      placeholder="e.g., Alice"
+                      className="w-full h-11 px-4 rounded-xl bg-[#0A0A0A] border border-[#303030] text-white placeholder-slate-500 text-sm focus:outline-none focus:border-[#78D197]/50 glow-input"
+                      required
+                    />
+                  </div>
+                  <div>
                     <label className="text-[10px] text-[#8C8C8C] uppercase tracking-wider block mb-1.5 font-semibold">Invite Code</label>
                     <input
                       type="text"
@@ -983,7 +1024,7 @@ export default function Dashboard() {
                   </div>
                   <button
                     type="submit"
-                    disabled={isJoining || !joinInviteCode.trim()}
+                    disabled={isJoining || !joinInviteCode.trim() || !joinMemberName.trim()}
                     className="w-full h-11 bg-[#CCFF00] hover:bg-[#b3e600] disabled:opacity-50 text-[#000000] font-extrabold text-sm rounded-xl transition flex items-center justify-center cursor-pointer active:scale-95 transition-transform duration-100"
                   >
                     {isJoining ? (
@@ -1011,6 +1052,19 @@ export default function Dashboard() {
                     onChange={(e) => setNewCircleName(e.target.value)}
                     placeholder="e.g., London Devs Circle"
                     className="w-full h-11 px-4 rounded-xl bg-[#0A0A0A] border border-[#303030] text-white placeholder-slate-500 text-sm focus:outline-none focus:border-[#78D197]/50 glow-input"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[10px] text-[#8C8C8C] uppercase tracking-wider block mb-1.5 font-semibold">Creator Name</label>
+                  <input
+                    type="text"
+                    value={newCreatorName}
+                    onChange={(e) => setNewCreatorName(e.target.value)}
+                    placeholder="e.g., Bob"
+                    className="w-full h-11 px-4 rounded-xl bg-[#0A0A0A] border border-[#303030] text-white placeholder-slate-500 text-sm focus:outline-none focus:border-[#78D197]/50 glow-input"
+                    required
                   />
                 </div>
 
@@ -1098,7 +1152,7 @@ export default function Dashboard() {
 
                 <button
                   type="submit"
-                  disabled={isCreating || !newCircleName.trim()}
+                  disabled={isCreating || !newCircleName.trim() || !newCreatorName.trim()}
                   className="w-full h-11 bg-[#CCFF00] hover:bg-[#b3e600] disabled:opacity-50 text-[#000000] font-extrabold text-sm rounded-xl transition flex items-center justify-center cursor-pointer active:scale-95 transition-transform duration-100"
                 >
                   {isCreating ? (
